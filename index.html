@@ -150,7 +150,7 @@
         <h1>FYSC Season 1</h1>
         <p class="subtitle">Search your channel name to check your standing live</p>
         
-        <!-- Blocking form element stops default webpage reload loops completely -->
+        <!-- Native submit override blocks default webpage refresh wipes completely -->
         <form onsubmit="startLiveTracking(); return false;">
             <div class="search-wrapper">
                 <input type="text" id="usernameInput" placeholder="Enter Channel Name" autocomplete="off" oninput="handleInputDrawing()">
@@ -169,14 +169,23 @@
         let liveUpdateTimer = null;
         let activeUser = null;
 
-        // Native script wrapper safely receives payload straight from your lcedit hub
-        window.lceditCallback = function(parsedData) {
+        // FIXED PROXY ENGINE TUNNEL: Strips out security block parameters instantly
+        async function loadData() {
             const loadingText = document.getElementById("loadingText");
             try {
-                // Instantly grabs ALL rows in your live counts registry data layout
+                const targetUrl = 'https://lcedit.com';
+                
+                // Routes database array parameters via a free, open proxy tunnel framework safely
+                const response = await fetch('https://allorigins.win' + encodeURIComponent(targetUrl) + '&t=' + Date.now());
+                if (!response.ok) throw new Error();
+                
+                const proxyContainer = await response.json();
+                const parsedData = JSON.parse(proxyContainer.contents);
+                
+                // Collects ALL registered user channels from your live counts data structure
                 channelsList = parsedData.data || parsedData.channels || [];
                 
-                // Keep everything sorted descending dynamically so rank standing numbers match exactly
+                // Automatically sort everyone descending to map true rank placements perfectly
                 channelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
 
                 if (loadingText && loadingText.textContent.includes("Connecting to live")) {
@@ -184,38 +193,25 @@
                     loadingText.textContent = "Ready! Enter your channel name above.";
                 }
                 
-                // If a user card is open when chat runs commands, silently update the numbers on screen
+                // Silently refresh open counter profile states when background chat bots fire commands
                 if (activeUser) {
-                    const freshUser = channelsList.find(u => u.name.toLowerCase() === activeUser.name.toLowerCase());
-                    if (freshUser) {
-                        activeUser.count = freshUser.count;
-                        activeUser.min_gain = freshUser.min_gain;
-                        activeUser.max_gain = freshUser.max_gain;
+                    const backgroundUpdate = channelsList.find(u => u.name.toLowerCase() === activeUser.name.toLowerCase());
+                    if (backgroundUpdate) {
+                        activeUser.count = backgroundUpdate.count;
+                        activeUser.min_gain = backgroundUpdate.min_gain;
+                        activeUser.max_gain = backgroundUpdate.max_gain;
                     }
                 }
             } catch (e) {
-                console.error("Failed parsing data matrix wrapper objects:", e);
+                console.error("Proxy routing timeout loop challenge:", e);
             }
-        };
-
-        // Injects script loader tag directly to query lcedit bypassing standard browser blocks
-        function loadData() {
-            const script = document.createElement('script');
-            // Connects cleanly to your exact streaming tracking account endpoint callback link
-            script.src = 'https://lcedit.com' + Date.now();
-            
-            const oldScript = document.getElementById('lcedit-bridge');
-            if (oldScript) oldScript.remove();
-            
-            script.id = 'lcedit-bridge';
-            document.body.appendChild(script);
         }
 
-        // Initialize connection instantly upon launching the webpage
+        // Initialize connection instantly on launch
         loadData();
 
-        // Quiet background loop checks for stream chat commands and updates every 6 seconds automatically
-        setInterval(loadData, 6000);
+        // Background script quietly syncs data metrics every 10 seconds to catch !add loops automatically
+        setInterval(loadData, 10000);
 
         function handleInputDrawing() {
             const inputVal = document.getElementById("usernameInput").value.trim().toLowerCase();
@@ -275,3 +271,7 @@
             }
             
             if (channelsList.length === 0) {
+                resultDiv.innerHTML = "<p style='color: #ff4a4a; margin:0;'>Database sync loop executing. Give it a moment...</p>";
+                return;
+            }
+
