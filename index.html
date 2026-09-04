@@ -169,45 +169,43 @@
         let masterChannelsList = [];
         const lceditSaveID = '82558b76-ff7e-1cd8-6b0b-a58ef0d8b020';
 
-        // THE RUNTIME RECEIVER HOOK: Safely captures text packets bypassing CORS block walls entirely
-        window.parseStudioFeed = function(payload) {
+        async function fetchLiveStreamData() {
             const statusMessage = document.getElementById("statusMessage");
             try {
-                // Ingest raw data matrix out of lcedit standard parameters layout structure
-                const incomingData = payload.counters || payload.data || payload.channels || [];
+                const targetUrl = 'https://lcedit.com' + lceditSaveID;
+                
+                // Routes request via an open API engine tunnel, stripping out browser block restrictions instantly
+                const response = await fetch('https://allorigins.win' + encodeURIComponent(targetUrl) + '&t=' + Date.now());
+                if (!response.ok) throw new Error("Proxy connection dropped");
+                
+                const proxyWrapper = await response.json();
+                const parsedData = JSON.parse(proxyWrapper.contents);
+                
+                // Dynamic mapping extracts user objects securely
+                const incomingData = parsedData.counters || parsedData.data || parsedData.channels || [];
                 
                 if (incomingData && incomingData.length > 0) {
                     masterChannelsList = incomingData;
                     
-                    // Sort descending automatically on every payload refresh loop so ranks re-calculate on the fly
+                    // Sort descending automatically so rank updates calculation on the fly
                     masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
                     
                     if (statusMessage) statusMessage.style.display = "none";
                     buildDashboardGrid(masterChannelsList);
                 }
             } catch (err) {
-                console.error("Format compilation conflict mapping object tokens:", err);
+                console.error("Data pipeline block: ", err);
+                if (statusMessage && masterChannelsList.length === 0) {
+                    statusMessage.textContent = "Syncing connection matrix... (Retrying)";
+                }
             }
-        };
-
-        function fetchLiveStreamData() {
-            // Generates a script source injection tag containing a cross-origin JSONP callback hook execution
-            const dynamicScript = document.createElement('script');
-            dynamicScript.src = 'https://lcedit.com' + lceditSaveID + '?callback=parseStudioFeed&t=' + Date.now();
-            
-            // Wipe away the previous script wrapper loop elements so the DOM body layout engine stays clean
-            const existingScript = document.getElementById('lcedit-automation-bridge');
-            if (existingScript) existingScript.remove();
-            
-            dynamicScript.id = 'lcedit-automation-bridge';
-            document.body.appendChild(dynamicScript);
         }
 
-        // Initialize unblocked live bridge connection instantly on web application load
+        // Initialize connection instantly on web page load
         fetchLiveStreamData();
 
-        // Quiet background loop queries your stream data account every 5 seconds to instantly parse new !add commands
-        setInterval(fetchLiveStreamData, 5000);
+        // Quiet background loop checks your stream ledger every 6 seconds to update newly typed !add commands
+        setInterval(fetchLiveStreamData, 6000);
 
         function buildDashboardGrid(listToRender) {
             const grid = document.getElementById("channelsGrid");
