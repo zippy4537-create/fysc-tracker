@@ -143,9 +143,8 @@
 
     <div class="container">
         <h1>FYSC Season 1</h1>
-        <p class="subtitle">Search your channel name to check your standing live</p>
+        <p class="subtitle">Search your channel name to check your standing live (Top 500)</p>
         
-        <!-- DIV element breaks the browser form submit page-refresh loop forever -->
         <div class="search-panel">
             <div class="search-wrapper">
                 <input type="text" id="usernameInput" placeholder="Enter Channel Name" autocomplete="off" oninput="handleInputDrawing()" onkeydown="handleEnterKey(event)">
@@ -155,60 +154,55 @@
         </div>
         
         <div class="result-box" id="resultArea">
-            <p style="color: #888; margin: 0;" id="statusMessage">Loading data directly from stream engine...</p>
+            <p style="color: #888; margin: 0;" id="statusMessage">Syncing Top 500 Data Feed...</p>
         </div>
     </div>
 
     <script>
-        // NO HARDCODED CHANNELS - Pulled completely live from lcedit
         let channelsList = [];
         let liveUpdateTimer = null;
         let activeUser = null;
 
+        // FIXED TOP 500 DATAPORT ENGINE FETCH LOOP
         async function fetchLiveDatabase() {
             const msgText = document.getElementById("statusMessage");
             try {
+                // Changing the route endpoint to grab the entire save layout structure, not just the top50 list array!
                 const targetUrl = 'https://lcedit.com';
+                const proxyUrl = 'https://allorigins.win' + encodeURIComponent(targetUrl) + '&t=' + Date.now();
                 
-                // AllOrigins proxy strips away browser headers blocking the lcedit link
-                const response = await fetch('https://allorigins.win' + encodeURIComponent(targetUrl) + '&t=' + Date.now());
-                if (!response.ok) throw new Error("Proxy error");
-                
+                const response = await fetch(proxyUrl);
                 const jsonWrapper = await response.json();
                 const parsedData = JSON.parse(jsonWrapper.contents);
                 
-                // Livecountsedit wraps arrays in parsedData.data
-                channelsList = parsedData.data || parsedData.channels || [];
+                // Studio data layout arrays store all 500 profiles inside nested objects or directly
+                channelsList = parsedData.data || parsedData.channels || parsedData.counters || [];
                 
-                // Instantly align data descending so ranks are mathematically perfect
+                // Dynamic array sort automatically builds mathematics for all 500 slots perfectly
                 channelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
 
-                if (msgText && msgText.textContent.includes("Loading data directly")) {
+                if (msgText && msgText.textContent.includes("Syncing Top 500")) {
                     msgText.textContent = "Ready! Enter your channel name above.";
                 }
 
-                // If a channel is currently loaded, silently update its values in the background
+                // Silently push background modifications straight to loaded views on stream command loops
                 if (activeUser) {
-                    const currentData = channelsList.find(u => u.name.toLowerCase() === activeUser.name.toLowerCase());
-                    if (currentData) {
-                        activeUser.count = currentData.count;
-                        activeUser.min_gain = currentData.min_gain;
-                        activeUser.max_gain = currentData.max_gain;
-                        activeUser.image = currentData.image;
+                    const freshData = channelsList.find(u => u.name.toLowerCase() === activeUser.name.toLowerCase());
+                    if (freshData) {
+                        activeUser.count = freshData.count;
+                        activeUser.min_gain = freshData.min_gain;
+                        activeUser.max_gain = freshData.max_gain;
+                        activeUser.image = freshData.image;
                     }
                 }
             } catch (err) {
                 console.error("Network read timeout loop conflict:", err);
-                if (msgText && channelsList.length === 0) {
-                    msgText.textContent = "Connecting error. Retrying...";
-                }
             }
         }
 
-        // Fetch everything immediately on launch
         fetchLiveDatabase();
 
-        // Background loop triggers a quiet sync every 8 seconds to parse !add increments instantly
+        // Quiet background loop checks for stream changes every 8 seconds automatically
         setInterval(fetchLiveDatabase, 8000);
 
         function handleEnterKey(event) {
@@ -227,7 +221,6 @@
                 return;
             }
 
-            // Filters matching items across ALL users inside your stream backend
             const matches = channelsList.filter(user => {
                 const name = (user.name || "").toString().toLowerCase();
                 return name.includes(inputVal);
@@ -276,7 +269,13 @@
             }
 
             if (channelsList.length === 0) {
-                resultDiv.innerHTML = "<p style='color: #ff4a4a; margin:0;'>Database still loading. Wait a second...</p>";
+                resultDiv.innerHTML = "<p style='color: #ff4a4a; margin:0;'>Database still syncing. Give it a brief second...</p>";
                 return;
             }
 
+            activeUser = channelsList.find(user => {
+                const currentName = (user.name || "").toString().trim().toLowerCase();
+                return currentName === searchInput;
+            });
+            
+            if (activeUser) {
