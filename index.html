@@ -3,137 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>All FYSC Season 1 Channels</title>
+    <title>FYSC Season 1 Hub</title>
+    <link rel="stylesheet" href="https://googleapis.com">
     <style>
+        /* BRAND NEW UNIQUE VISUAL INTERFACE STYLE */
         body {
-            font-family: Arial, sans-serif;
-            background-color: #222222;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0d0e15 0%, #151624 100%);
             color: #ffffff;
             margin: 0;
-            padding: 40px 20px;
+            padding: 50px 20px;
             text-align: center;
+            min-height: 100vh;
         }
         h1 {
-            font-size: 36px;
-            margin-bottom: 30px;
+            font-size: 42px;
+            font-weight: 800;
+            background: linear-gradient(45deg, #ff4a4a, #ff7676);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+            letter-spacing: -0.5px;
+        }
+        .subtitle {
+            color: #8fa0dd;
+            font-size: 15px;
+            margin-bottom: 40px;
+            font-weight: 400;
         }
         .search-container {
-            margin-bottom: 40px;
+            margin-bottom: 50px;
             display: flex;
             justify-content: center;
-            gap: 10px;
+            gap: 12px;
         }
         input[type="text"] {
-            background-color: #1a242d;
-            border: 1px solid #3ca4a6;
+            background-color: #1c1d30;
+            border: 2px solid #2d2f4a;
             color: #ffffff;
-            padding: 10px 15px;
-            font-size: 14px;
-            border-radius: 4px;
-            width: 250px;
+            padding: 12px 20px;
+            font-size: 15px;
+            border-radius: 8px;
+            width: 280px;
             outline: none;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.2s;
+        }
+        input[type="text"]:focus {
+            border-color: #ff4a4a;
+            box-shadow: 0 0 10px rgba(255, 74, 74, 0.2);
         }
         button.search-btn {
-            background-color: #1a242d;
-            border: 1px solid #3ca4a6;
-            color: #3ca4a6;
-            padding: 10px 25px;
-            font-size: 14px;
-            border-radius: 4px;
+            background-color: #ff4a4a;
+            border: none;
+            color: #ffffff;
+            padding: 12px 30px;
+            font-size: 15px;
+            border-radius: 8px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.2s;
         }
         button.search-btn:hover {
-            background-color: #3ca4a6;
-            color: #1a242d;
+            background-color: #e03e3e;
+            transform: translateY(-1px);
         }
         .channels-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 25px;
             max-width: 1200px;
             margin: 0 auto;
         }
         .channel-card {
-            background-color: #2d2d2d;
-            border-radius: 6px;
-            padding: 15px;
+            background-color: #161726;
+            border-radius: 12px;
+            padding: 20px;
             position: relative;
             text-align: left;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            border: 1px solid #3d3d3d;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            border: 1px solid #25273c;
+            transition: all 0.2s ease-in-out;
+        }
+        .channel-card:hover {
+            transform: translateY(-4px);
+            border-color: #ff4a4a;
+            box-shadow: 0 12px 25px rgba(255, 74, 74, 0.15);
         }
         .rank-badge {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            background-color: #00bcd4;
+            top: 12px;
+            left: 12px;
+            background: linear-gradient(45deg, #ff4a4a, #ff7676);
             color: #ffffff;
             font-size: 11px;
-            font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 3px;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(255, 74, 74, 0.3);
         }
         .card-header {
             display: flex;
             align-items: center;
-            margin-top: 20px;
+            margin-top: 15px;
             margin-bottom: 15px;
-            gap: 10px;
+            gap: 12px;
         }
         .avatar {
             width: 55px;
             height: 55px;
-            border-radius: 4px;
+            border-radius: 50%;
             object-fit: cover;
-            background-color: #444;
+            background-color: #25273c;
+            border: 2px solid #2d2f4a;
         }
         .channel-name {
-            font-size: 14px;
-            font-weight: bold;
+            font-size: 15px;
+            font-weight: 600;
             word-break: break-word;
             color: #ffffff;
         }
         .sub-count-line {
             font-size: 12px;
-            color: #aaaaaa;
-            margin-bottom: 15px;
+            color: #8e92a7;
+            margin-bottom: 20px;
+            border-top: 1px solid #25273c;
+            padding-top: 12px;
         }
         .sub-number {
             color: #ffffff;
-            font-weight: bold;
+            font-weight: 800;
             display: block;
-            font-size: 15px;
+            font-size: 18px;
             margin-top: 2px;
+            font-family: monospace;
         }
         .card-actions {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
         }
         .action-btn {
-            background-color: #1a242d;
-            border: 1px solid #3ca4a6;
-            color: #3ca4a6;
-            padding: 8px;
-            font-size: 12px;
-            border-radius: 4px;
+            background-color: #1c1d30;
+            border: 1px solid #2d2f4a;
+            color: #cbd5e1;
+            padding: 10px;
+            font-size: 13px;
+            border-radius: 6px;
             cursor: pointer;
             text-align: center;
-            font-weight: bold;
+            font-weight: 600;
             text-decoration: none;
-            transition: 0.15s;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.15s;
         }
         .action-btn:hover {
-            background-color: #3ca4a6;
-            color: #1a242d;
+            background-color: #2d2f4a;
+            color: #ffffff;
+            border-color: #474b75;
+        }
+        .action-btn.primary-action {
+            background-color: rgba(255, 74, 74, 0.1);
+            border-color: rgba(255, 74, 74, 0.4);
+            color: #ff7676;
+        }
+        .action-btn.primary-action:hover {
+            background-color: #ff4a4a;
+            color: #ffffff;
+            border-color: #ff4a4a;
         }
         .admin-panel {
-            margin-top: 60px;
+            margin-top: 80px;
             padding: 20px;
-            background-color: #1a1a1a;
-            border-radius: 8px;
-            border: 1px dashed #444;
+            background-color: #11121e;
+            border-radius: 12px;
+            border: 1px dashed #2d2f4a;
             max-width: 600px;
             margin-left: auto;
             margin-right: auto;
@@ -141,136 +186,116 @@
         textarea {
             width: 100%;
             height: 80px;
-            background-color: #2b2b2b;
+            background-color: #1c1d30;
             color: #ffffff;
-            border: 1px solid #444;
-            border-radius: 4px;
+            border: 1px solid #2d2f4a;
+            border-radius: 6px;
             padding: 10px;
             box-sizing: border-box;
             font-family: monospace;
             font-size: 12px;
             resize: none;
             outline: none;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
         .sync-btn {
-            background-color: #1a242d;
-            border: 1px solid #3ca4a6;
-            color: #3ca4a6;
-            padding: 8px 20px;
+            background-color: #2d2f4a;
+            border: none;
+            color: #ffffff;
+            padding: 8px 25px;
             font-size: 13px;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
         }
         .sync-btn:hover {
-            background-color: #3ca4a6;
-            color: #1a242d;
+            background-color: #3d416e;
+        }
+        /* POPUP CONTAINER STYLING */
+        .modal-overlay {
+            position: fixed;
+            top:0; left:0; right:0; bottom:0;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-box {
+            background: #161726;
+            padding: 40px;
+            border-radius: 16px;
+            border: 2px solid #ff4a4a;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(255, 74, 74, 0.2);
+            transform: scale(0.8);
+            transition: transform 0.2s ease;
+        }
+        .modal-overlay.active .modal-box {
+            transform: scale(1);
+        }
+        .modal-name {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+        .modal-counter {
+            font-size: 48px;
+            font-weight: 800;
+            color: #ff4a4a;
+            font-family: monospace;
+            margin: 20px 0;
+            letter-spacing: -1px;
         }
     </style>
 </head>
 <body>
 
-    <h1>All FYSC Season 1 Channels</h1>
+    <h1>FYSC Season 1</h1>
+    <p class="subtitle">Live Leaderboard Ecosystem & Channel Standing Analyzer</p>
 
     <div class="search-container">
-        <!-- Native intercept strictly prevents form browser resets -->
         <form onsubmit="filterChannels(); return false;" style="display: flex; gap: 10px;">
-            <input type="text" id="userInput" placeholder="Search user..." oninput="filterChannels()">
-            <button type="submit" class="search-btn">Search User</button>
+            <input type="text" id="userInput" placeholder="Search channel name..." oninput="filterChannels()">
+            <button type="submit" class="search-btn">Search</button>
         </form>
     </div>
 
-    <div id="statusMessage" style="font-size: 16px; color: #aaaaaa; margin-top: 20px;">Ready! Paste your lcedit text data into the tool below to generate the cards dashboard.</div>
     <div class="channels-grid" id="channelsGrid"></div>
 
-    <!-- DATA INPUT ACCESS PANEL -->
+    <!-- LIVE POPUP COUNT MODAL LAYER -->
+    <div class="modal-overlay" id="countModal" onclick="closeLiveCounter()">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <div id="modalRank" style="color:#8fa0dd; font-weight:600; font-size:14px; margin-bottom:10px;">RANK #--</div>
+            <img id="modalAvatar" src="" style="width:80px; height:80px; border-radius:50%; border:2px solid #ff4a4a; object-fit:cover; margin-bottom:15px;">
+            <div class="modal-name" id="modalChannelName">Channel Name</div>
+            <div style="font-size:12px; color:#8e92a7; text-transform:uppercase; letter-spacing:1px; margin-top:15px;">Live Subscribers</div>
+            <div class="modal-counter" id="modalCount">0</div>
+            <button class="action-btn" style="width:100%; margin-top:10px;" onclick="closeLiveCounter()">Close Tracker</button>
+        </div>
+    </div>
+
+    <!-- REFRESH INPUT BOX FOR THE STREAMER -->
     <div class="admin-panel">
-        <p style="font-size: 13px; margin: 0 0 10px 0; color: #aaa;">Streamer tool: Paste data from your lcedit link here to refresh all layout cards instantly</p>
-        <textarea id="jsonPasteInput" placeholder="Open your studio tab layout, download/view source text, and paste it here..."></textarea>
-        <button type="button" class="sync-btn" onclick="syncDatabaseManual()">Sync Channels Grid</button>
+        <p>Streamer System Controller (Paste fresh lcedit data code logs here to update numbers on stream)</p>
+        <textarea id="jsonPasteInput" placeholder="Paste updated text string here..."></textarea>
+        <button type="button" class="sync-btn" onclick="syncDatabaseManual()">Sync Live Ledger</button>
     </div>
 
     <script>
         let masterChannelsList = [];
+        let modalTimer = null;
+        let activeModalUser = null;
 
-        // Ingest previous setups from storage instantly to skip loading screens entirely
-        if (localStorage.getItem("fysc_clean_grid_v9")) {
+        // Auto-load data from memory cache out of storage log instantly
+        if (localStorage.getItem("fysc_clean_grid_v5")) {
             try {
-                masterChannelsList = JSON.parse(localStorage.getItem("fysc_clean_grid_v9"));
-                masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
-                document.getElementById("statusMessage").style.display = "none";
-                renderGridHTML(masterChannelsList);
-            } catch(e) { console.error(e); }
-        }
-
-        function syncDatabaseManual() {
-            const rawText = document.getElementById("jsonPasteInput").value.trim();
-            if (!rawText) return alert("Please paste the data text block first!");
-            try {
-                const parsed = JSON.parse(rawText);
-                // Dynamically targets your stream data wherever it is stored in the object
-                const incoming = parsed.counters || parsed.data || parsed.channels || parsed;
-                if (Array.isArray(incoming)) {
-                    masterChannelsList = incoming;
-                    masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
-                    
-                    // Save to unique storage key v9 to drop previous memory caches
-                    localStorage.setItem("fysc_clean_grid_v9", JSON.stringify(masterChannelsList));
-                    
-                    document.getElementById("statusMessage").style.display = "none";
-                    renderGridHTML(masterChannelsList);
-                    alert("Grid synced! Successfully loaded total entries: " + masterChannelsList.length);
-                    document.getElementById("jsonPasteInput").value = "";
-                } else {
-                    alert("Invalid text string layout. Make sure you copy the entire raw array file.");
-                }
-            } catch (err) {
-                alert("Parsing failed: Check if code string copied completely.");
-            }
-        }
-
-        function renderGridHTML(listToRender) {
-            const grid = document.getElementById("channelsGrid");
-            grid.innerHTML = "";
-
-            listToRender.forEach(user => {
-                const trueRank = masterChannelsList.indexOf(user) + 1;
-                const currentCount = Math.floor(Number(user.count || 0));
-                const avatarImg = user.image || "https://placeholder.com";
-
-                const card = document.createElement("div");
-                card.className = "channel-card";
-                card.innerHTML = `
-                    <div class="rank-badge">#${trueRank}</div>
-                    <div class="card-header">
-                        <img class="avatar" src="${avatarImg}" alt="Avatar">
-                        <span class="channel-name">${user.name}</span>
-                    </div>
-                    <div class="sub-count-line">
-                        Subscribers:
-                        <span class="sub-number">${currentCount.toLocaleString()}</span>
-                    </div>
-                    <div class="card-actions">
-                        <button class="action-btn" onclick="alert('Viewing live count for ${user.name}')">Live Subcount</button>
-                        <a class="action-btn" href="https://youtube.com" target="_blank">Go to Channel</a>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-        }
-
-        function filterChannels() {
-            const query = document.getElementById("userInput").value.trim().toLowerCase();
-            if (query === "") {
-                renderGridHTML(masterChannelsList);
-                return;
-            }
-            const filtered = masterChannelsList.filter(user => 
-                (user.name || "").toString().toLowerCase().includes(query)
-            );
-            renderGridHTML(filtered);
-        }
-    </script>
-</body>
-</html>
