@@ -165,20 +165,19 @@
         <h1>FYSC Season 1</h1>
         <p class="subtitle">Search your channel name to check your standing live</p>
         
-        <!-- DIV panels block the default input reload crash completely -->
-        <div class="search-panel">
+        <!-- Native submit interception securely prevents any browser full-page reload loops -->
+        <form onsubmit="startLiveTracking(); return false;">
             <div class="search-wrapper">
-                <input type="text" id="usernameInput" placeholder="Enter Channel Name" autocomplete="off" oninput="handleInputDrawing()" onkeydown="handleEnterKey(event)">
+                <input type="text" id="usernameInput" placeholder="Enter Channel Name" autocomplete="off" oninput="handleInputDrawing()">
                 <div class="suggestions-box" id="suggestionsBox"></div>
             </div>
-            <button type="button" onclick="startLiveTracking()">Search Channel</button>
-        </div>
+            <button type="submit">Search Channel</button>
+        </form>
         
         <div class="result-box" id="resultArea">
             <p style="color: #888; margin: 0;" id="statusMessage">Ready! Sync your data text block below.</p>
         </div>
 
-        <!-- BUILT-IN MANAGEMENT SYNC PANEL -->
         <div class="admin-panel">
             <p style="font-size: 12px; margin: 0 0 8px 0; color: #aaa;">Streamer Data Update Tool</p>
             <textarea id="jsonPasteInput" placeholder="Open your lcedit database link in a new tab, copy all the text, and paste it here..."></textarea>
@@ -187,7 +186,7 @@
     </div>
 
     <script>
-        // Placeholder channels block preventing early blank file breaks
+        // Fallback default dataset 
         let channelsList = [
             { "name": "GianlucaStatsV2", "count": 224880 },
             { "name": "MrDragonBeast", "count": 219689 },
@@ -200,7 +199,6 @@
         let liveUpdateTimer = null;
         let activeUser = null;
 
-        // Pull stored channel profiles out of local memory instantly upon refresh
         if (localStorage.getItem("fysc_saved_list")) {
             try {
                 channelsList = JSON.parse(localStorage.getItem("fysc_saved_list"));
@@ -231,13 +229,7 @@
                     alert("Format error. Make sure you copied everything from the page text.");
                 }
             } catch (err) {
-                alert("Text Read Error: Verify the data was copied completely.");
-            }
-        }
-
-        function handleEnterKey(event) {
-            if (event.key === "Enter") {
-                startLiveTracking();
+                alert("Paste Error: Verify the data was copied completely.");
             }
         }
 
@@ -286,3 +278,9 @@
             }
         });
 
+        function startLiveTracking() {
+            // Closes auto-complete menu listing box safely
+            document.getElementById("suggestionsBox").style.display = "none";
+            clearInterval(liveUpdateTimer);
+
+            const searchInput = document.getElementById("usernameInput").value.trim().toLowerCase();
