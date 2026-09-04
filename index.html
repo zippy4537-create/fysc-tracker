@@ -145,7 +145,7 @@
         <h1>FYSC Season 1</h1>
         <p class="subtitle">Search your channel name to check your standing live</p>
         
-        <!-- DIV structural elements prevent background form sub reload overrides -->
+        <!-- Interactive search elements without page-refresh reload wrappers -->
         <div class="search-panel">
             <div class="search-wrapper">
                 <input type="text" id="usernameInput" placeholder="Enter Channel Name" autocomplete="off" oninput="handleInputDrawing()" onkeydown="handleEnterKey(event)">
@@ -155,47 +155,43 @@
         </div>
         
         <div class="result-box" id="resultArea">
-            <p style="color: #888; margin: 0;" id="statusText">Syncing live stream data...</p>
+            <p style="color: #888; margin: 0;" id="statusText">Ready! Enter your channel name above.</p>
         </div>
     </div>
 
     <script>
+        // Start empty—all data is injected dynamically from the stream network loop
         let channelsList = [];
         let liveUpdateTimer = null;
         let activeUser = null;
 
-        // FIXED CALLBACK ROUTE: Successfully receives raw inputs via top50 script tags
-        window.lceditStreamCallback = function(payload) {
-            const statusMsg = document.getElementById("statusText");
+        // Dynamic callback handler processes data directly in the browser runtime environment
+        window.lceditResponseHandler = function(payload) {
             try {
-                // Read from either the direct array property block or standard list wrapper data mapping
+                // Instantly syncs every registered viewer tracked in your database
                 channelsList = payload.data || payload.channels || payload.counters || [];
                 
-                // Keep everything sorted descending dynamically so positions map mathematically correct
+                // Sort everything dynamically so rankings math matches your actual stream
                 channelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
 
-                if (statusMsg && statusMsg.textContent.includes("Syncing live")) {
-                    statusMsg.textContent = "Ready! Enter your channel name above.";
-                }
-
-                // Silently push live values straight to open lookup views
+                // Silently push live counter adjustments directly to open display views
                 if (activeUser) {
-                    const latestMatch = channelsList.find(u => u.name.toLowerCase() === activeUser.name.toLowerCase());
-                    if (latestMatch) {
-                        activeUser.count = latestMatch.count;
-                        activeUser.min_gain = latestMatch.min_gain;
-                        activeUser.max_gain = latestMatch.max_gain;
-                        activeUser.image = latestMatch.image;
+                    const backgroundMatch = channelsList.find(u => u.name.toLowerCase() === activeUser.name.toLowerCase());
+                    if (backgroundMatch) {
+                        activeUser.count = backgroundMatch.count;
+                        activeUser.min_gain = backgroundMatch.min_gain;
+                        activeUser.max_gain = backgroundMatch.max_gain;
+                        activeUser.image = backgroundMatch.image;
                     }
                 }
             } catch (err) {
-                console.error("Error formatting backend properties array:", err);
+                console.error("Data tracking error:", err);
             }
         };
 
         function fetchLiveDatabase() {
             const dynamicScript = document.createElement('script');
-            // FIX: Reverted backend route to verified top50 endpoint callback channel
+            // Connects through lcedit's open api channel layout, bypassing CORS block walls
             dynamicScript.src = 'https://lcedit.com' + Date.now();
             
             const oldScript = document.getElementById('lcedit-bridge');
@@ -205,10 +201,10 @@
             document.body.appendChild(dynamicScript);
         }
 
-        // Fetch immediately
+        // Initialize connection instantly on launch
         fetchLiveDatabase();
 
-        // Check for updates every 10 seconds silently to parse stream changes automatically
+        // Check for updates every 10 seconds silently to parse stream !add loops
         setInterval(fetchLiveDatabase, 10000);
 
         function handleEnterKey(event) {
@@ -274,10 +270,13 @@
                 return;
             }
 
-            if (channelsList.length === 0) {
-                resultDiv.innerHTML = "<p style='color: #ff4a4a; margin:0;'>Database sync in progress. Try again in a moment...</p>";
-                return;
-            }
-
             activeUser = channelsList.find(user => {
                 const currentName = (user.name || "").toString().trim().toLowerCase();
+                return currentName === searchInput;
+            });
+            
+            if (activeUser) {
+                if (typeof activeUser.currentRunningCount === 'undefined' || isNaN(activeUser.currentRunningCount)) {
+                    activeUser.currentRunningCount = Number(activeUser.count || 0);
+                }
+
