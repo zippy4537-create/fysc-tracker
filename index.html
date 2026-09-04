@@ -144,46 +144,35 @@
         <button class="search-btn" onclick="filterChannels()">Search User</button>
     </div>
 
-    <div id="statusMessage">Loading channels...</div>
+    <div id="statusMessage">Connecting directly to stream registry...</div>
     <div class="channels-grid" id="channelsGrid"></div>
 
     <script>
         let masterChannelsList = [];
 
-        // CALLBACK CHANNEL: Safely captures live parameters directly from the lcedit hub
-        window.processLiveRegistry = function(payload) {
+        async function fetchLiveStreamData() {
+            const statusMessage = document.getElementById("statusMessage");
             try {
-                const incomingData = payload.data || payload.channels || payload.counters || [];
+                // Connects directly to your own private proxy pipeline on the site root path
+                const response = await fetch('/api/proxy?t=' + Date.now());
+                if (!response.ok) throw new Error();
                 
-                // Sort everything descending to render ranks correctly
-                incomingData.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
+                const parsedData = await response.json();
+                masterChannelsList = parsedData.data || parsedData.channels || [];
                 
-                masterChannelsList = incomingData;
-                document.getElementById("statusMessage").style.display = "none";
+                masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
                 
+                if (statusMessage) statusMessage.style.display = "none";
                 renderGridHTML(masterChannelsList);
             } catch (err) {
-                console.error("Error processing registry matrix:", err);
-                document.getElementById("statusMessage").textContent = "Error loading channels data.";
+                console.error("Local data sync error:", err);
+                if (statusMessage && masterChannelsList.length === 0) {
+                    statusMessage.textContent = "Re-establishing connection pipeline...";
+                }
             }
-        };
-
-        function fetchLiveStreamData() {
-            const dynamicScript = document.createElement('script');
-            // Uses your exact save ID token mapped with the platform callback parameter
-            dynamicScript.src = 'https://lcedit.com' + Date.now();
-            
-            const existingScript = document.getElementById('lcedit-connection-bridge');
-            if (existingScript) existingScript.remove();
-            
-            dynamicScript.id = 'lcedit-connection-bridge';
-            document.body.appendChild(dynamicScript);
         }
 
-        // Initialize connection immediately upon loading the webpage
         fetchLiveStreamData();
-
-        // Silently loop-sync in the background every 10 seconds to catch newly typed !add chat commands
         setInterval(fetchLiveStreamData, 10000);
 
         function renderGridHTML(listToRender) {
@@ -191,7 +180,6 @@
             grid.innerHTML = "";
 
             listToRender.forEach(user => {
-                // Find true leaderboard placement index across the master dataset
                 const trueRank = masterChannelsList.indexOf(user) + 1;
                 const currentCount = Math.floor(Number(user.count || 0));
                 const avatarImg = user.image || "https://placeholder.com";
