@@ -110,7 +110,6 @@
         <h1>FYSC Season 1</h1>
         <p class="subtitle">Search your channel name to check your standing live</p>
         
-        <!-- WRAPPED SEARCH IN A FORM TO HANDLE NATIVE KEYBOARD SUBMISSIONS -->
         <form onsubmit="handleFormSubmit(event)">
             <input type="text" id="usernameInput" placeholder="Enter Channel Name" autocomplete="off">
             <br>
@@ -123,12 +122,11 @@
     </div>
 
     <script>
-        // Connected directly to your active lcedit dashboard registry cloud stream link
+        // Your exact livecountsedit dashboard cloud link
         const streamId = "81969dc3-7249-47f7-8554-8d0bb8c33800"; 
 
         let globalLiveTimer = null;
 
-        // Form handler prevents standard page refresh and kicks off live stream tracking sequence
         function handleFormSubmit(event) {
             event.preventDefault();
             startLiveTracking();
@@ -159,7 +157,9 @@
         async function fetchLiveCloudData(username) {
             const resultDiv = document.getElementById("resultArea");
             try {
-                const response = await fetch(`https://lcedit.com{streamId}/?t=${Date.now()}`);
+                // FIXED INTERFACE ROUTING: Added 'https://corsproxy.io?' to bypass browser safety blocks
+                const targetUrl = `https://lcedit.com{streamId}/?t=${Date.now()}`;
+                const response = await fetch(`https://corsproxy.io?${encodeURIComponent(targetUrl)}`);
                 const parsedData = await response.json();
                 
                 const channelsList = parsedData.data || parsedData.counters || [];
@@ -188,6 +188,7 @@
                 }
             } catch (e) {
                 console.error("Failed to connect live to lcedit stream API:", e);
+                resultDiv.innerHTML = `<p style="color: #ff4a4a; margin: 0;">Error: Connection blocked. Trying to reconnect...</p>`;
             }
         }
     </script>
