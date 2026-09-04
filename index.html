@@ -6,7 +6,7 @@
     <title>FYSC Season 1 Hub</title>
     <link rel="stylesheet" href="https://googleapis.com">
     <style>
-        /* BRAND NEW UNIQUE VISUAL INTERFACE STYLE */
+        /* UNIQUE HIGH-END REBRANDED VISUAL THEME */
         body {
             font-family: 'Poppins', sans-serif;
             background: linear-gradient(135deg, #0d0e15 0%, #151624 100%);
@@ -119,7 +119,7 @@
             border: 2px solid #2d2f4a;
         }
         .channel-name {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
             word-break: break-word;
             color: #ffffff;
@@ -212,7 +212,7 @@
         .sync-btn:hover {
             background-color: #3d416e;
         }
-        /* POPUP CONTAINER STYLING */
+        /* POPUP DATA MODAL OVERLAY TRACKING SYSTEM */
         .modal-overlay {
             position: fixed;
             top:0; left:0; right:0; bottom:0;
@@ -239,6 +239,7 @@
             box-shadow: 0 10px 30px rgba(255, 74, 74, 0.2);
             transform: scale(0.8);
             transition: transform 0.2s ease;
+            text-align: center;
         }
         .modal-overlay.active .modal-box {
             transform: scale(1);
@@ -272,11 +273,11 @@
 
     <div class="channels-grid" id="channelsGrid"></div>
 
-    <!-- LIVE POPUP COUNT MODAL LAYER -->
+    <!-- LIVE POPUP ANIMATED GRAPHIC LAYER ENGINE -->
     <div class="modal-overlay" id="countModal" onclick="closeLiveCounter()">
         <div class="modal-box" onclick="event.stopPropagation()">
             <div id="modalRank" style="color:#8fa0dd; font-weight:600; font-size:14px; margin-bottom:10px;">RANK #--</div>
-            <img id="modalAvatar" src="" style="width:80px; height:80px; border-radius:50%; border:2px solid #ff4a4a; object-fit:cover; margin-bottom:15px;">
+            <img id="modalAvatar" src="" style="width:80px; height:80px; border-radius:50%; border:2px solid #ff4a4a; object-fit:cover; margin-bottom:15px; background-color:#25273c;">
             <div class="modal-name" id="modalChannelName">Channel Name</div>
             <div style="font-size:12px; color:#8e92a7; text-transform:uppercase; letter-spacing:1px; margin-top:15px;">Live Subscribers</div>
             <div class="modal-counter" id="modalCount">0</div>
@@ -284,7 +285,7 @@
         </div>
     </div>
 
-    <!-- REFRESH INPUT BOX FOR THE STREAMER -->
+    <!-- UPDATE BLOCK CONSOLE PANEL -->
     <div class="admin-panel">
         <p>Streamer System Controller (Paste fresh lcedit data code logs here to update numbers on stream)</p>
         <textarea id="jsonPasteInput" placeholder="Paste updated text string here..."></textarea>
@@ -293,9 +294,6 @@
 
     <script>
         let masterChannelsList = [];
-        let modalTimer = null;
         let activeModalUser = null;
 
         // Auto-load data from memory cache out of storage log instantly
-        if (localStorage.getItem("fysc_clean_grid_v5")) {
-            try {
