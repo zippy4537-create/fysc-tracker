@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FYSC Season 1 Channels - Live Engine</title>
+    <title>FYSC Season 1 Leaderboard Search</title>
     <style>
         body {
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            background-color: #121212;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #0f0f0f;
             color: #ffffff;
             text-align: center;
             padding: 50px 20px;
@@ -16,40 +16,42 @@
         .container {
             max-width: 500px;
             margin: 0 auto;
-            background-color: #1e1e1e;
+            background-color: #1f1f1f;
             padding: 30px;
             border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
             position: relative;
         }
         h1 {
-            color: #ff4a4a;
+            color: #ff0000;
             margin-bottom: 5px;
-            font-size: 28px;
+            font-size: 32px;
+            font-weight: bold;
         }
-        p.subtitle {
+        .subtitle {
             color: #aaaaaa;
             margin-bottom: 25px;
+            font-size: 14px;
         }
-        .search-wrapper {
+        .search-panel {
             position: relative;
-            width: 85%;
-            margin: 0 auto 15px auto;
+            width: 90%;
+            margin: 0 auto;
         }
         input[type="text"] {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             font-size: 16px;
             border: 2px solid #333;
-            border-radius: 6px;
-            background-color: #2a2a2a;
+            border-radius: 8px;
+            background-color: #2b2a2a;
             color: white;
             outline: none;
             text-align: center;
             box-sizing: border-box;
         }
         input[type="text"]:focus {
-            border-color: #ff4a4a;
+            border-color: #ff0000;
         }
         .suggestions-box {
             position: absolute;
@@ -59,8 +61,8 @@
             background-color: #252525;
             border: 2px solid #333;
             border-top: none;
-            border-radius: 0 0 6px 6px;
-            max-height: 200px;
+            border-radius: 0 0 8px 8px;
+            max-height: 220px;
             overflow-y: auto;
             z-index: 9999;
             display: none;
@@ -68,50 +70,52 @@
             box-shadow: 0 8px 16px rgba(0,0,0,0.6);
         }
         .suggestion-item {
-            padding: 10px 15px;
+            padding: 12px 15px;
             cursor: pointer;
             color: #ddd;
             font-size: 15px;
             border-bottom: 1px solid #333;
-            display: flex;
-            align-items: center;
+        }
+        .suggestion-item:last-child {
+            border-bottom: none;
         }
         .suggestion-item:hover {
-            background-color: #ff4a4a;
+            background-color: #ff0000;
             color: white;
         }
-        button {
-            padding: 12px 30px;
+        .search-btn {
+            margin-top: 15px;
+            padding: 12px 35px;
             font-size: 16px;
-            background-color: #ff4a4a;
+            background-color: #ff0000;
             color: white;
             border: none;
             border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
             transition: 0.2s;
-            margin-top: 5px;
         }
-        button:hover {
-            background-color: #e03e3e;
+        .search-btn:hover {
+            background-color: #cc0000;
         }
         .result-box {
             margin-top: 30px;
             padding: 25px;
             border-radius: 8px;
-            background-color: #252525;
+            background-color: #151515;
             min-height: 140px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            border: 1px solid #252525;
         }
         .avatar {
-            width: 70px;
-            height: 70px;
+            width: 75px;
+            height: 75px;
             border-radius: 50%;
             margin-bottom: 12px;
-            border: 2px solid #ff4a4a;
+            border: 2px solid #ff0000;
         }
         .stat-line {
             font-size: 18px;
@@ -119,9 +123,10 @@
             color: #ddd;
         }
         .highlight {
-            color: #ff4a4a;
+            color: #ff0000;
             font-weight: bold;
-            font-size: 32px;
+            font-size: 34px;
+            letter-spacing: -1px;
         }
         .live-indicator {
             display: inline-block;
@@ -137,25 +142,49 @@
             50% { opacity: 1; }
             100% { opacity: 0.3; }
         }
-        .admin-panel {
+        .streamer-tools {
             margin-top: 40px;
             padding: 15px;
-            background: #1a1a1a;
+            background: #151515;
             border-radius: 8px;
-            border: 1px dashed #444;
+            border: 1px dashed #333;
+        }
+        .streamer-tools p {
+            font-size: 12px;
+            margin: 0 0 10px 0;
+            color: #888;
         }
         textarea {
             width: 100%;
-            height: 70px;
-            background: #2a2a2a;
+            height: 60px;
+            background: #252525;
             color: #fff;
             border: 1px solid #333;
             border-radius: 4px;
-            padding: 10px;
+            padding: 8px;
             box-sizing: border-box;
             font-family: monospace;
             font-size: 11px;
             resize: none;
+            outline: none;
+        }
+        textarea:focus {
+            border-color: #ff0000;
+        }
+        .sync-btn {
+            background-color: #333;
+            color: #aaa;
+            border: 1px solid #444;
+            padding: 6px 14px;
+            font-size: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 8px;
+            font-weight: bold;
+        }
+        .sync-btn:hover {
+            background-color: #444;
+            color: #fff;
         }
     </style>
 </head>
@@ -165,78 +194,72 @@
         <h1>FYSC Season 1</h1>
         <p class="subtitle">Search your channel name to check your standing live</p>
         
-        <!-- Modern form submission blocks default webpage hard-refreshes -->
-        <form onsubmit="startLiveTracking(); return false;">
-            <div class="search-wrapper">
-                <input type="text" id="usernameInput" placeholder="Enter Channel Name" autocomplete="off" oninput="handleInputDrawing()">
+        <!-- form tag with return false strictly stops page refreshes -->
+        <form onsubmit="executeChannelSearch(); return false;">
+            <div class="search-panel">
+                <input type="text" id="usernameInput" placeholder="Enter Channel Name" autocomplete="off" oninput="showLiveSuggestions()">
                 <div class="suggestions-box" id="suggestionsBox"></div>
             </div>
-            <button type="submit">Search Channel</button>
+            <button type="submit" class="search-btn">Search Channel</button>
         </form>
         
         <div class="result-box" id="resultArea">
-            <p style="color: #888; margin: 0;" id="statusMessage">Ready! Load your stream channel data below.</p>
+            <p style="color: #888; margin: 0;" id="mainStatusText">Ready! Update your channel list below.</p>
         </div>
 
-        <!-- MANUAL UPDATE BOX TO COMPLETELY BYPASS THE NETWORK WALL -->
-        <div class="admin-panel">
-            <p style="font-size: 12px; margin: 0 0 8px 0; color: #aaa;">Streamer tool: Paste data from lcedit link here to update all channels instantly</p>
-            <textarea id="jsonPasteInput" placeholder="Open your lcedit link in a new tab, copy everything, and paste it here..."></textarea>
-            <button type="button" style="background:#444; font-size:12px; padding:5px 12px;" onclick="syncDatabaseManual()">Load Channels List</button>
+        <div class="streamer-tools">
+            <p>Streamer Sync Tool (Paste your raw lcedit API text below)</p>
+            <textarea id="jsonPasteBox" placeholder="Paste text here..."></textarea>
+            <button type="button" class="sync-btn" onclick="processDatabaseSync()">Sync Leaderboard</button>
         </div>
     </div>
 
     <script>
-        // Starter sample list so the application works before your first paste
-        let channelsList = [
-            { "name": "GianlucaStatsV2", "count": 224880 },
-            { "name": "MrDragonBeast", "count": 219689 },
-            { "name": "BenGaming", "count": 196409 },
-            { "name": "Dekyy722u", "count": 177622 },
-            { "name": "ai ShowSpeed", "count": 128895 },
-            { "name": "glm", "count": 21516 }
-        ];
+        let fullChannelsData = [];
+        let liveTickerTimer = null;
+        let selectedChannel = null;
 
-        let liveUpdateTimer = null;
-        let activeUser = null;
-
-        // Pull stored channel profiles out of browser local storage instantly upon layout reload
-        if (localStorage.getItem("fysc_saved_list")) {
+        // Automatically load saved database from browser storage if page refreshes
+        if (localStorage.getItem("fysc_saved_database")) {
             try {
-                channelsList = JSON.parse(localStorage.getItem("fysc_saved_list"));
+                fullChannelsData = JSON.parse(localStorage.getItem("fysc_saved_database"));
+                fullChannelsData.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
+                refreshStatusBanner();
             } catch(e) {}
         }
 
-        channelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
-        updateStatusDisplay();
-
-        function updateStatusDisplay() {
-            document.getElementById("statusMessage").textContent = "Ready! Tracking " + channelsList.length + " total stream channels.";
+        function refreshStatusBanner() {
+            document.getElementById("mainStatusText").textContent = "Database active! Loaded " + fullChannelsData.length + " total channels.";
         }
 
-        // FIXED LOADING FUNCTION: This reads your text wall and updates the database instantly
-        function syncDatabaseManual() {
-            const rawText = document.getElementById("jsonPasteInput").value.trim();
-            if (!rawText) return alert("Please paste the data text block first!");
+        function processDatabaseSync() {
+            const pastedInput = document.getElementById("jsonPasteBox").value.trim();
+            if (!pastedInput) return alert("Please paste the data text block first!");
+
             try {
-                const parsed = JSON.parse(rawText);
-                const incoming = parsed.data || parsed.channels || parsed.counters || parsed;
-                if (Array.isArray(incoming)) {
-                    channelsList = incoming;
-                    channelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
-                    localStorage.setItem("fysc_saved_list", JSON.stringify(channelsList));
-                    updateStatusDisplay();
-                    alert("Sync successful! Loaded " + channelsList.length + " channels. Viewers can now search!");
-                    document.getElementById("jsonPasteInput").value = "";
+                const parsedJSON = JSON.parse(pastedInput);
+                const arrayPayload = parsedJSON.data || parsedJSON.channels || parsedJSON.counters || parsedJSON;
+                
+                if (Array.isArray(arrayPayload)) {
+                    fullChannelsData = arrayPayload;
+                    // Sort descending immediately to make ranks perfect
+                    fullChannelsData.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
+                    
+                    // Save into browser history cache
+                    localStorage.setItem("fysc_saved_database", JSON.stringify(fullChannelsData));
+                    refreshStatusBanner();
+                    
+                    alert("Leaderboard updated! " + fullChannelsData.length + " channels are now searchable.");
+                    document.getElementById("jsonPasteBox").value = "";
                 } else {
-                    alert("Text format error. Make sure you copied everything from the link page.");
+                    alert("Invalid data structure. Make sure you copied the whole text wall.");
                 }
             } catch (err) {
-                alert("Paste Error: Make sure you copied the text correctly.");
+                alert("JSON Parse Error: Make sure you copied the text correctly.");
             }
         }
 
-        function handleInputDrawing() {
+        function showLiveSuggestions() {
             const inputVal = document.getElementById("usernameInput").value.trim().toLowerCase();
             const suggestionsBox = document.getElementById("suggestionsBox");
             
@@ -246,36 +269,26 @@
                 return;
             }
 
-            const matches = channelsList.filter(user => {
-                const name = (user.name || "").toString().toLowerCase();
-                return name.includes(inputVal);
+            const matchingResults = fullChannelsData.filter(user => {
+                const channelName = (user.name || "").toString().toLowerCase();
+                return channelName.includes(inputVal);
             }).slice(0, 6);
 
-            if (matches.length === 0) {
+            if (matchingResults.length === 0) {
                 suggestionsBox.innerHTML = "";
                 suggestionsBox.style.display = "none";
                 return;
             }
 
             suggestionsBox.innerHTML = "";
-            matches.forEach(user => {
-                const item = document.createElement("div");
-                item.className = "suggestion-item";
-                item.innerHTML = `<span>${user.name}</span>`;
+            matchingResults.forEach(user => {
+                const divItem = document.createElement("div");
+                divItem.className = "suggestion-item";
+                divItem.innerHTML = `<span>${user.name}</span>`;
                 
-                item.onclick = function() {
+                divItem.onclick = function() {
                     document.getElementById("usernameInput").value = user.name;
                     suggestionsBox.innerHTML = "";
                     suggestionsBox.style.display = "none";
-                    startLiveTracking();
+                    executeChannelSearch();
                 };
-                suggestionsBox.appendChild(item);
-            });
-
-            suggestionsBox.style.display = "block";
-        }
-
-        document.addEventListener("click", function(e) {
-            if (e.target.id !== "usernameInput") {
-                document.getElementById("suggestionsBox").style.display = "none";
-            }
