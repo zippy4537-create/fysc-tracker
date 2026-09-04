@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FYSC Season 1 Channels</title>
+    <title>FYSC Season 1 Channels - Live Tracker</title>
     <link rel="stylesheet" href="https://googleapis.com">
     <style>
         body {
@@ -86,7 +86,22 @@
         .highlight {
             color: #ff4a4a;
             font-weight: bold;
-            font-size: 24px;
+            font-size: 28px; /* Slightly bigger font for the active odometer look */
+            transition: color 0.3s ease;
+        }
+        .live-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #148c50;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: blink 1.5s infinite;
+        }
+        @keyframes blink {
+            0% { opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { opacity: 0.3; }
         }
     </style>
 </head>
@@ -107,15 +122,18 @@
 
     <script>
         let channelsList = [];
+        let updateIntervalTimer = null;
+        let activeUser = null;
 
-        // This connects directly to your separate data.json file
+        // Automatically fetch your configurations from the separate file
         async function loadData() {
             const resultDiv = document.getElementById("resultArea");
             try {
-                const response = await fetch('data.json');
+                // Prevent GitHub cache layers from sticking
+                const response = await fetch('data.json?t=' + Date.now());
                 const parsedData = await response.json();
                 
-                // Read from the lcedit structured array
+                // Read directly from lcedit JSON structural exports array
                 channelsList = parsedData.data || parsedData.counters || [];
                 resultDiv.innerHTML = `<p style="color: #888; margin: 0;">Ready! Enter your channel name above.</p>`;
             } catch (e) {
@@ -124,10 +142,13 @@
             }
         }
 
-        // Run data sync immediately
+        // Run data load immediately
         loadData();
 
         function lookupUser() {
+            // Stop any background live updates from a previous search
+            clearInterval(updateIntervalTimer);
+
             const searchInput = document.getElementById("usernameInput").value.trim().toLowerCase();
             const resultDiv = document.getElementById("resultArea");
             
@@ -141,23 +162,72 @@
                 return;
             }
 
-            const foundUser = channelsList.find(user => (user.name || "").trim().toLowerCase() === searchInput);
+            activeUser = channelsList.find(user => (user.name || "").trim().toLowerCase() === searchInput);
             
-            if (foundUser) {
-                const userSubs = Math.floor(foundUser.count || foundUser.lastCount || 0);
-                const userImage = foundUser.image || "https://ggpht.com";
+            if (activeUser) {
+                renderUserCard();
+                
+                // START THE LIVE FEED LOGIC: 
+                // This script recalculates and ticks the counter up automatically every 2 seconds
+                updateIntervalTimer = setInterval(() => {
+                    simulateLiveGains();
+                }, 2000); 
 
-                resultDiv.innerHTML = `
-                    <img class="avatar" src="${userImage}" alt="Avatar">
-                    <div class="stat-line">Channel: <span class="highlight">${foundUser.name}</span></div>
-                    <div class="stat-line">Subscribers: <span class="highlight">${userSubs.toLocaleString()}</span></div>
-                    <div class="stat-line" style="font-size:12px; color:#555; margin-top:8px;">Connected Live via lcedit</div>
-                `;
             } else {
                 resultDiv.innerHTML = `
                     <p style="color: #ff4a4a; font-weight: bold; margin: 0 0 10px 0;">User not found!</p>
                     <p style="font-size: 14px; color: #aaa; margin: 0;">Make sure the spelling matches your stream registry layout exactly.</p>
                 `;
+            }
+        }
+
+        function renderUserCard() {
+            const resultDiv = document.getElementById("resultArea");
+            const userSubs = Math.floor(activeUser.count || activeUser.lastCount || 0);
+            const userImage = activeUser.image || "https://ggpht.com";
+
+            resultDiv.innerHTML = `
+                <img class="avatar" src="${userImage}" alt="Avatar">
+                <div class="stat-line">Channel: <span style="font-weight:bold; color:white;">${activeUser.name}</span></div>
+                <div class="stat-line">Subscribers: <span class="highlight" id="liveCounter">${userSubs.toLocaleString()}</span></div>
+                <div class="stat-line" style="font-size:12px; color:#148c50; margin-top:8px; display:flex; align-items:center; justify-content:center;">
+                    <span class="live-indicator"></span> Updating Live via lcedit string
+                </div>
+            `;
+        }
+
+        function simulateLiveGains() {
+            if (!activeUser) return;
+
+            // Look inside the user's lcedit array data properties for min_gain / max_gain parameters
+            // If they aren't configured, fall back to standard stream increments (-2 to +4)
+            const minGain = typeof activeUser.min_gain !== 'undefined' ? Number(activeUser.min_gain) : -2;
+            const maxGain = typeof activeUser.max_gain !== 'undefined' ? Number(activeUser.max_gain) : 4;
+            
+            // Generate a random increment based on your lcedit settings matching your live stream flow
+            const change = Math.floor(Math.random() * (maxGain - minGain + 1)) + minGain;
+            
+            // Adjust current base counters values 
+            if (activeUser.count) activeUser.count += change;
+            if (activeUser.lastCount) activeUser.lastCount += change;
+
+            // Target the dashboard UI number element container directly and inject the new live counter string
+            const counterElement = document.getElementById("liveCounter");
+            if (counterElement) {
+                const currentCount = Math.floor(activeUser.count || activeUser.lastCount || 0);
+                counterElement.innerText = currentCount.toLocaleString();
+                
+                // Flashes colors matching positive/negative gains just like your streamer overlay dashboard template
+                if (change > 0) {
+                    counterElement.style.color = "#148c50"; // Green for plus
+                } else if (change < 0) {
+                    counterElement.style.color = "#b43c3c"; // Red for minus
+                }
+                
+                // Fade colors back to the custom signature theme red hue after a brief moment
+                setTimeout(() => {
+                    counterElement.style.color = "#ff4a4a";
+                }, 400);
             }
         }
     </script>
