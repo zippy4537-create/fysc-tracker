@@ -128,44 +128,10 @@
             background-color: #3ca4a6;
             color: #1a242d;
         }
-        .admin-panel {
-            margin-top: 60px;
-            padding: 20px;
-            background-color: #1a1a1a;
-            border-radius: 8px;
-            border: 1px dashed #444;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        textarea {
-            width: 100%;
-            height: 80px;
-            background-color: #2b2b2b;
-            color: #ffffff;
-            border: 1px solid #444;
-            border-radius: 4px;
-            padding: 10px;
-            box-sizing: border-box;
-            font-family: monospace;
-            font-size: 12px;
-            resize: none;
-            outline: none;
-            margin-bottom: 10px;
-        }
-        .sync-btn {
-            background-color: #1a242d;
-            border: 1px solid #3ca4a6;
-            color: #3ca4a6;
-            padding: 8px 20px;
-            font-size: 13px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .sync-btn:hover {
-            background-color: #3ca4a6;
-            color: #1a242d;
+        #statusMessage {
+            font-size: 16px;
+            color: #aaaaaa;
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -180,66 +146,50 @@
         </form>
     </div>
 
-    <div id="statusMessage" style="font-size: 16px; color: #aaaaaa; margin-top: 20px; display: none;">Ready!</div>
+    <div id="statusMessage">Syncing live channel directory cards...</div>
     <div class="channels-grid" id="channelsGrid"></div>
 
-    <!-- Hidden admin dashboard control section panel block -->
-    <div class="admin-panel" style="margin-top:80px; opacity: 0.15;">
-        <p style="font-size: 13px; margin: 0 0 10px 0; color: #aaa;">Streamer override channel array backup panel config sync:</p>
-        <textarea id="jsonPasteInput" placeholder="Paste updated text data string values here to force override cache logs..."></textarea>
-        <button type="button" class="sync-btn" onclick="syncDatabaseManual()">Force Update</button>
-    </div>
-
     <script>
-        // =========================================================================
-        // LIVE BUILT-IN DATABASE SOURCE
-        // Your current stream data is fully hardcoded right into the site body!
-        // =========================================================================
-        let masterChannelsList = [
-            { "name": "titouc", "count": 583132284939 },
-            { "name": "ilikecharliekirk", "count": 223643810933 },
-            { "name": "Omegalayer", "count": 216571617971 },
-            { "name": "アティーン", "count": 203887475379 },
-            { "name": "Suika", "count": 100075971157 },
-            { "name": "Stevred", "count": 96050581035 },
-            { "name": "Canal KondZilla", "count": 64994668633 },
-            { "name": "YouTube Statistics", "count": 58953116748 },
-            { "name": "FriendZAYY", "count": 50495252266 },
-            { "name": "isaac", "count": 38713045958 },
-            { "name": "glm", "count": 21516000 },
-            { "name": "GianlucaStatsV2", "count": 224880 },
-            { "name": "MrDragonBeast", "count": 219689 },
-            { "name": "BenGaming", "count": 196409 },
-            { "name": "Dekyy722u", "count": 177622 },
-            { "name": "ai ShowSpeed", "count": 128895 }
-        ];
+        let masterChannelsList = [];
 
-        // Read alternative browser override values if you decide to alter rows down the line
-        if (localStorage.getItem("fysc_final_grid_source")) {
+        // THE NATIVE SCRIPT BYPASS: Receives data payload loops natively inside the browser execution context
+        window.processLivecountsStream = function(payload) {
+            const statusMessage = document.getElementById("statusMessage");
             try {
-                masterChannelsList = JSON.parse(localStorage.getItem("fysc_final_grid_source"));
-            } catch(e) {}
-        }
-
-        // Align positions sorting descending automatically
-        masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
-
-        function syncDatabaseManual() {
-            const rawText = document.getElementById("jsonPasteInput").value.trim();
-            if (!rawText) return alert("Paste your data text block first!");
-            try {
-                const parsed = JSON.parse(rawText);
-                const incoming = parsed.counters || parsed.data || parsed.channels || parsed;
-                if (Array.isArray(incoming)) {
-                    masterChannelsList = incoming;
+                // Ingest raw data container out of your save ID profile token mapping setup
+                const incomingData = payload.counters || payload.data || payload.channels || [];
+                
+                if (incomingData.length > 0) {
+                    masterChannelsList = incomingData;
+                    
+                    // Sort descending automatically so rank placements map perfectly across all profiles
                     masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
-                    localStorage.setItem("fysc_final_grid_source", JSON.stringify(masterChannelsList));
+                    
+                    if (statusMessage) statusMessage.style.display = "none";
                     renderGridHTML(masterChannelsList);
-                    alert("Dashboard template updated directly! Total loaded records: " + masterChannelsList.length);
-                    document.getElementById("jsonPasteInput").value = "";
                 }
-            } catch (err) { alert("Parse Error"); }
+            } catch (err) {
+                console.error("Format compilation error:", err);
+            }
+        };
+
+        function fetchLiveStreamData() {
+            const dynamicScript = document.createElement('script');
+            // Connects directly via script callback tags which browser layers are structurally forced to trust
+            dynamicScript.src = 'https://lcedit.com' + Date.now();
+            
+            const existingScript = document.getElementById('lcedit-automation-bridge');
+            if (existingScript) existingScript.remove();
+            
+            dynamicScript.id = 'lcedit-automation-bridge';
+            document.body.appendChild(dynamicScript);
         }
+
+        // Fetch data immediately upon initial website load
+        fetchLiveStreamData();
+
+        // Silently loop-sync in the background every 8 seconds to catch newly typed !add chat commands automatically
+        setInterval(fetchLiveStreamData, 8000);
 
         function renderGridHTML(listToRender) {
             const grid = document.getElementById("channelsGrid");
@@ -271,3 +221,17 @@
             });
         }
 
+        function filterChannels() {
+            const query = document.getElementById("userInput").value.trim().toLowerCase();
+            if (query === "") {
+                renderGridHTML(masterChannelsList);
+                return;
+            }
+            const filtered = masterChannelsList.filter(user => 
+                (user.name || "").toString().toLowerCase().includes(query)
+            );
+            renderGridHTML(filtered);
+        }
+    </script>
+</body>
+</html>
