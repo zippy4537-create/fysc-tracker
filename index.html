@@ -127,17 +127,24 @@
         let liveUpdateTimer = null;
         let activeUser = null;
 
-        // Load baseline data from your local file safely to avoid external block rules
+        // Load live data directly from your Livecountsedit Stream Hub
         async function loadData() {
             const resultDiv = document.getElementById("resultArea");
             try {
-                const response = await fetch('data.json?t=' + Date.now());
+                // Pulls live data using your unique save code
+                const response = await fetch('https://lcedit.com');
                 const parsedData = await response.json();
-                channelsList = parsedData.data || parsedData.counters || [];
+                
+                // Extract channels array from the Livecountsedit response
+                channelsList = parsedData.channels || [];
+                
+                // Sort by count descending so index tracking calculates mathematically perfect ranks
+                channelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
+
                 resultDiv.innerHTML = `<p style="color: #888; margin: 0;">Ready! Enter your channel name above.</p>`;
             } catch (e) {
-                console.error("Failed to load local data configuration:", e);
-                resultDiv.innerHTML = `<p style="color: #ff4a4a; margin: 0;">Error loading database. Please check your data.json file.</p>`;
+                console.error("Failed to load live data configuration:", e);
+                resultDiv.innerHTML = `<p style="color: #ff4a4a; margin: 0;">Error connecting to live server. Please try again.</p>`;
             }
         }
 
@@ -177,7 +184,7 @@
 
                 renderUserCard();
                 
-                // Read the speed setting straight from your dashboard setup
+                // Check if update rate is explicitly defined, otherwise default to 2000ms (2 seconds)
                 const updateRateMs = Number(channelsList.updateInterval) || 2000;
 
                 // LOCAL ODOMETER LOOP: Calculates fluctuations in real-time
@@ -197,13 +204,15 @@
             const resultDiv = document.getElementById("resultArea");
             const displayCount = Math.floor(activeUser.currentRunningCount);
             
+            // Calculate rank dynamically based on their position in sorted array
             let userRank = activeUser.rank;
             if (!userRank) {
                 const index = channelsList.indexOf(activeUser);
                 userRank = index !== -1 ? index + 1 : "Tracking";
             }
             
-            const userImage = activeUser.image || "https://ggpht.com";
+            // Handle profile pictures correctly if they don't have one
+            const userImage = activeUser.image || "https://placeholder.com";
 
             resultDiv.innerHTML = `
                 <img class="avatar" src="${userImage}" alt="Avatar">
@@ -219,32 +228,18 @@
         function executeLiveTick() {
             if (!activeUser) return;
 
-            // Extract the algorithmic gain metrics from your data file
-            const minGain = typeof activeUser.min_gain !== 'undefined' ? Number(activeUser.min_gain) : -3;
-            const maxGain = typeof activeUser.max_gain !== 'undefined' ? Number(activeUser.max_gain) : 5;
-            
-            // Random fluctuation based on your exact layout rate settings
-            const change = Math.floor(Math.random() * (maxGain - minGain + 1)) + minGain;
-            
-            activeUser.currentRunningCount += change;
+            // Extract the algorithmic gain metrics from your Livecountsedit configurations
+            const minGain = typeof activeUser.min_gain !== 'undefined' ? Number(activeUser.min_gain) : -1;
+            const maxGain = typeof activeUser.max_gain !== 'undefined' ? Number(activeUser.max_gain) : 3;
 
-            const counterElement = document.getElementById("liveCounter");
-            if (counterElement) {
-                counterElement.innerText = Math.floor(activeUser.currentRunningCount).toLocaleString();
-                
-                // Color updates flash matching positive/negative gains
-                if (change > 0) {
-                    counterElement.style.color = "#148c50"; // Green for plus
-                } else if (change < 0) {
-                    counterElement.style.color = "#b43c3c"; // Red for minus
-                }
-                
-                // Smoothly switch colors back to primary layout red
-                setTimeout(() => {
-                    counterElement.style.color = "#ff4a4a";
-                }, 300);
+            // Calculate random step fluctuation
+            const randomChange = Math.random() * (maxGain - minGain) + minGain;
+            activeUser.currentRunningCount += randomChange;
+
+            if (activeUser.currentRunningCount < 0) activeUser.currentRunningCount = 0;
+
+            // Update user counter numbers smoothly on the document page
+            const counterSpan = document.getElementById("liveCounter");
+            if (counterSpan) {
+                counterSpan.textContent = Math.floor(activeUser.currentRunningCount).toLocaleString();
             }
-        }
-    </script>
-</body>
-</html>
