@@ -140,7 +140,7 @@
     <h1>All FYSC Season 1 Channels</h1>
 
     <div class="search-container">
-        <!-- Native submit override blocks default webpage refresh wipes completely -->
+        <!-- Built-in input loop blocks full page resets -->
         <form onsubmit="filterChannels(); return false;" style="display: flex; gap: 10px;">
             <input type="text" id="userInput" placeholder="Search user..." oninput="filterChannels()">
             <button type="submit" class="search-btn">Search User</button>
@@ -153,30 +153,30 @@
     <script>
         let masterChannelsList = [];
 
-        // FIXED UNBLOCKED DIRECT FEED INTEGRATION: Catches the raw user lists seamlessly
-        window.lceditResponseHandler = function(payload) {
+        // THE ABSOLUTE REPAIR FIX: Correctly maps to lcedit's internal .counters layout format
+        window.lceditCallback = function(payload) {
             const statusMessage = document.getElementById("statusMessage");
             try {
-                // Ingest raw data list from lcedit standard background data mapping
-                const incomingData = payload.data || payload.channels || payload.counters || [];
+                // INGESTION TRICK: Grabs data from .counters or .data to read every single slot
+                const incomingData = payload.counters || payload.data || payload.channels || [];
                 
                 if (incomingData.length > 0) {
                     masterChannelsList = incomingData;
                     
-                    // Sort descending automatically so rank values match your standings layout
+                    // Sort descending automatically so rank values match perfectly
                     masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
                     
                     if (statusMessage) statusMessage.style.display = "none";
                     renderGridHTML(masterChannelsList);
                 }
             } catch (err) {
-                console.error("Format parsing block conflict:", err);
+                console.error("Format processing conflict:", err);
             }
         };
 
         function fetchLiveStreamData() {
             const dynamicScript = document.createElement('script');
-            // FIX: Using lcedit's root asset script endpoint which completely ignores browser CORS parameters
+            // Connects through lcedit's open API channel template to pull data instantly
             dynamicScript.src = 'https://lcedit.com' + Date.now();
             
             const existingScript = document.getElementById('lcedit-automation-bridge');
@@ -186,18 +186,18 @@
             document.body.appendChild(dynamicScript);
         }
 
-        // Fetch data immediately upon initial website load
+        // Fetch everything immediately upon launching the site
         fetchLiveStreamData();
 
-        // Silently loop-sync in the background every 10 seconds to catch newly typed !add chat commands
-        setInterval(fetchLiveStreamData, 10000);
+        // Silent automatic check runs in the background every 8 seconds to update !add chat commands
+        setInterval(fetchLiveStreamData, 8000);
 
         function renderGridHTML(listToRender) {
             const grid = document.getElementById("channelsGrid");
             grid.innerHTML = "";
 
             listToRender.forEach(user => {
-                // Computes the absolute leaderboard placement index across your complete registry list
+                // Find true leaderboard placement index across the master dataset
                 const trueRank = masterChannelsList.indexOf(user) + 1;
                 const currentCount = Math.floor(Number(user.count || 0));
                 const avatarImg = user.image || "https://placeholder.com";
