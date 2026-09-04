@@ -137,6 +137,26 @@
             50% { opacity: 1; }
             100% { opacity: 0.3; }
         }
+        .admin-panel {
+            margin-top: 40px;
+            padding: 15px;
+            background: #1a1a1a;
+            border-radius: 8px;
+            border: 1px dashed #444;
+        }
+        textarea {
+            width: 100%;
+            height: 70px;
+            background: #2a2a2a;
+            color: #fff;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 10px;
+            box-sizing: border-box;
+            font-family: monospace;
+            font-size: 11px;
+            resize: none;
+        }
     </style>
 </head>
 <body>
@@ -145,7 +165,7 @@
         <h1>FYSC Season 1</h1>
         <p class="subtitle">Search your channel name to check your standing live</p>
         
-        <!-- Interactive search elements without page-refresh reload wrappers -->
+        <!-- DIV panels block the default input reload crash completely -->
         <div class="search-panel">
             <div class="search-wrapper">
                 <input type="text" id="usernameInput" placeholder="Enter Channel Name" autocomplete="off" oninput="handleInputDrawing()" onkeydown="handleEnterKey(event)">
@@ -155,57 +175,65 @@
         </div>
         
         <div class="result-box" id="resultArea">
-            <p style="color: #888; margin: 0;" id="statusText">Ready! Enter your channel name above.</p>
+            <p style="color: #888; margin: 0;" id="statusMessage">Ready! Sync your data text block below.</p>
+        </div>
+
+        <!-- BUILT-IN MANAGEMENT SYNC PANEL -->
+        <div class="admin-panel">
+            <p style="font-size: 12px; margin: 0 0 8px 0; color: #aaa;">Streamer Data Update Tool</p>
+            <textarea id="jsonPasteInput" placeholder="Open your lcedit database link in a new tab, copy all the text, and paste it here..."></textarea>
+            <button type="button" style="background:#444; font-size:12px; padding:5px 12px;" onclick="syncDatabaseManual()">Sync Channels</button>
         </div>
     </div>
 
     <script>
-        // Start empty—all data is injected dynamically from the stream network loop
-        let channelsList = [];
+        // Placeholder channels block preventing early blank file breaks
+        let channelsList = [
+            { "name": "GianlucaStatsV2", "count": 224880 },
+            { "name": "MrDragonBeast", "count": 219689 },
+            { "name": "BenGaming", "count": 196409 },
+            { "name": "Dekyy722u", "count": 177622 },
+            { "name": "ai ShowSpeed", "count": 128895 },
+            { "name": "glm", "count": 21516 }
+        ];
+
         let liveUpdateTimer = null;
         let activeUser = null;
 
-        // Dynamic callback handler processes data directly in the browser runtime environment
-        window.lceditResponseHandler = function(payload) {
+        // Pull stored channel profiles out of local memory instantly upon refresh
+        if (localStorage.getItem("fysc_saved_list")) {
             try {
-                // Instantly syncs every registered viewer tracked in your database
-                channelsList = payload.data || payload.channels || payload.counters || [];
-                
-                // Sort everything dynamically so rankings math matches your actual stream
-                channelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
-
-                // Silently push live counter adjustments directly to open display views
-                if (activeUser) {
-                    const backgroundMatch = channelsList.find(u => u.name.toLowerCase() === activeUser.name.toLowerCase());
-                    if (backgroundMatch) {
-                        activeUser.count = backgroundMatch.count;
-                        activeUser.min_gain = backgroundMatch.min_gain;
-                        activeUser.max_gain = backgroundMatch.max_gain;
-                        activeUser.image = backgroundMatch.image;
-                    }
-                }
-            } catch (err) {
-                console.error("Data tracking error:", err);
-            }
-        };
-
-        function fetchLiveDatabase() {
-            const dynamicScript = document.createElement('script');
-            // Connects through lcedit's open api channel layout, bypassing CORS block walls
-            dynamicScript.src = 'https://lcedit.com' + Date.now();
-            
-            const oldScript = document.getElementById('lcedit-bridge');
-            if (oldScript) oldScript.remove();
-            
-            dynamicScript.id = 'lcedit-bridge';
-            document.body.appendChild(dynamicScript);
+                channelsList = JSON.parse(localStorage.getItem("fysc_saved_list"));
+            } catch(e) {}
         }
 
-        // Initialize connection instantly on launch
-        fetchLiveDatabase();
+        channelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
+        updateStatusDisplay();
 
-        // Check for updates every 10 seconds silently to parse stream !add loops
-        setInterval(fetchLiveDatabase, 10000);
+        function updateStatusDisplay() {
+            document.getElementById("statusMessage").textContent = "Ready! Tracking " + channelsList.length + " total stream channels.";
+        }
+
+        function syncDatabaseManual() {
+            const rawText = document.getElementById("jsonPasteInput").value.trim();
+            if (!rawText) return alert("Please paste the data text block first!");
+            try {
+                const parsed = JSON.parse(rawText);
+                const incoming = parsed.data || parsed.channels || parsed.counters || parsed;
+                if (Array.isArray(incoming)) {
+                    channelsList = incoming;
+                    channelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
+                    localStorage.setItem("fysc_saved_list", JSON.stringify(channelsList));
+                    updateStatusDisplay();
+                    alert("Database loaded successfully! Total users added: " + channelsList.length);
+                    document.getElementById("jsonPasteInput").value = "";
+                } else {
+                    alert("Format error. Make sure you copied everything from the page text.");
+                }
+            } catch (err) {
+                alert("Text Read Error: Verify the data was copied completely.");
+            }
+        }
 
         function handleEnterKey(event) {
             if (event.key === "Enter") {
@@ -257,26 +285,4 @@
                 document.getElementById("suggestionsBox").style.display = "none";
             }
         });
-
-        function startLiveTracking() {
-            document.getElementById("suggestionsBox").style.display = "none";
-            clearInterval(liveUpdateTimer);
-
-            const searchInput = document.getElementById("usernameInput").value.trim().toLowerCase();
-            const resultDiv = document.getElementById("resultArea");
-            
-            if (searchInput === "") {
-                resultDiv.innerHTML = "<p style='color: #ff4a4a; margin:0;'>Please enter a name to search.</p>";
-                return;
-            }
-
-            activeUser = channelsList.find(user => {
-                const currentName = (user.name || "").toString().trim().toLowerCase();
-                return currentName === searchInput;
-            });
-            
-            if (activeUser) {
-                if (typeof activeUser.currentRunningCount === 'undefined' || isNaN(activeUser.currentRunningCount)) {
-                    activeUser.currentRunningCount = Number(activeUser.count || 0);
-                }
 
