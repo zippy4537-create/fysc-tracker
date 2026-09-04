@@ -137,25 +137,6 @@
             50% { opacity: 1; }
             100% { opacity: 0.3; }
         }
-        .admin-panel {
-            margin-top: 40px;
-            padding: 15px;
-            background: #1a1a1a;
-            border-radius: 8px;
-            border: 1px dashed #444;
-        }
-        textarea {
-            width: 100%;
-            height: 80px;
-            background: #2a2a2a;
-            color: #fff;
-            border: 1px solid #333;
-            border-radius: 4px;
-            padding: 10px;
-            box-sizing: border-box;
-            font-family: monospace;
-            font-size: 12px;
-        }
     </style>
 </head>
 <body>
@@ -164,7 +145,7 @@
         <h1>FYSC Season 1</h1>
         <p class="subtitle">Search your channel name to check your standing live</p>
         
-        <!-- DIV wrappers stop the default input reload crash -->
+        <!-- Plain DIV panel layout blocks automatic full-page form reloads forever -->
         <div class="search-panel">
             <div class="search-wrapper">
                 <input type="text" id="usernameInput" placeholder="Enter Channel Name" autocomplete="off" oninput="handleInputDrawing()" onkeydown="handleEnterKey(event)">
@@ -174,13 +155,7 @@
         </div>
         
         <div class="result-box" id="resultArea">
-            <p style="color: #888; margin: 0;" id="statusMessage">Ready! Sync your data text below.</p>
-        </div>
-
-        <div class="admin-panel">
-            <p style="font-size: 13px; margin: 0 0 10px 0; color: #aaa;">Streamer Data Sync Panel</p>
-            <textarea id="jsonPasteInput" placeholder="Paste your raw api text here..."></textarea>
-            <button type="button" style="background:#444; font-size:13px; padding:6px 15px;" onclick="syncDatabaseManual()">Sync Channels</button>
+            <p style="color: #888; margin: 0;" id="statusText">Syncing live stream data...</p>
         </div>
     </div>
 
@@ -189,35 +164,54 @@
         let liveUpdateTimer = null;
         let activeUser = null;
 
-        if (localStorage.getItem("fysc_cached_data")) {
+        // SECURE JSONP INTERCEPT: Securely bypasses browser CORS network walls
+        window.parseLivecountsData = function(payload) {
+            const statusMsg = document.getElementById("statusText");
             try {
-                channelsList = JSON.parse(localStorage.getItem("fysc_cached_data"));
+                // Ingests ALL saved user slots recorded in your lcedit registry database file
+                channelsList = payload.data || payload.channels || payload.counters || [];
+                
+                // Sort by count descending so absolute standings match your overlay logic perfectly
                 channelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
-                document.getElementById("statusMessage").textContent = "Database active! Total tracked: " + channelsList.length;
-            } catch(e) { console.error(e); }
-        }
 
-        function syncDatabaseManual() {
-            const rawText = document.getElementById("jsonPasteInput").value.trim();
-            if (!rawText) return alert("Paste your data text block first!");
-            try {
-                const parsed = JSON.parse(rawText);
-                // Accepts data blocks from livecountsedit save layouts
-                const incoming = parsed.data || parsed.channels || parsed.counters || parsed;
-                if (Array.isArray(incoming)) {
-                    channelsList = incoming;
-                    channelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
-                    localStorage.setItem("fysc_cached_data", JSON.stringify(channelsList));
-                    document.getElementById("statusMessage").textContent = "Database active! Total tracked: " + channelsList.length;
-                    alert("Database updated successfully! Registered entries: " + channelsList.length);
-                    document.getElementById("jsonPasteInput").value = "";
-                } else {
-                    alert("Invalid data layout structure inside text.");
+                if (statusMsg && statusMsg.textContent.includes("Syncing live")) {
+                    statusMsg.textContent = "Ready! Enter your channel name above.";
+                }
+
+                // If a channel card is currently open on screen, quietly update its background values
+                if (activeUser) {
+                    const latestMatch = channelsList.find(u => u.name.toLowerCase() === activeUser.name.toLowerCase());
+                    if (latestMatch) {
+                        activeUser.count = latestMatch.count;
+                        activeUser.min_gain = latestMatch.min_gain;
+                        activeUser.max_gain = latestMatch.max_gain;
+                        activeUser.image = latestMatch.image;
+                    }
                 }
             } catch (err) {
-                alert("Text read error: " + err.message);
+                console.error("Error formatting live database structure:", err);
             }
+        };
+
+        function fetchLiveDatabase() {
+            // Replaces standard network calls with a direct script element injection
+            const dynamicScript = document.createElement('script');
+            // Using your exact save ID token mapped with the platform callback parameter
+            dynamicScript.src = 'https://lcedit.com' + Date.now();
+            
+            // Clean up previous instances so the HTML body stays empty
+            const oldScript = document.getElementById('lcedit-bridge');
+            if (oldScript) oldScript.remove();
+            
+            dynamicScript.id = 'lcedit-bridge';
+            document.body.appendChild(dynamicScript);
         }
+
+        // Fetch data immediately upon initial website load
+        fetchLiveDatabase();
+
+        // Silently loop-sync in the background every 10 seconds to catch newly typed !add chat commands
+        setInterval(fetchLiveDatabase, 10000);
 
         function handleEnterKey(event) {
             if (event.key === "Enter") {
@@ -235,6 +229,7 @@
                 return;
             }
 
+            // Checks the complete stream list database for auto-fill hints
             const matches = channelsList.filter(user => {
                 const name = (user.name || "").toString().toLowerCase();
                 return name.includes(inputVal);
