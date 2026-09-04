@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FYSC Leaderboard Hub</title>
+    <title>FYSC Season 1 Leaderboard Engine</title>
     <link rel="stylesheet" href="https://googleapis.com">
     <style>
         body {
@@ -71,6 +71,9 @@
             position: relative;
             text-align: left;
         }
+        .channel-card:hover {
+            border-color: #ff4a4a;
+        }
         .rank-badge {
             position: absolute;
             top: 10px;
@@ -98,7 +101,7 @@
             background-color: #25273c;
         }
         .channel-name {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
             word-break: break-word;
         }
@@ -135,7 +138,13 @@
         }
         .action-btn:hover {
             border-color: #ff4a4a;
-            color: #fff;
+            color: white;
+        }
+        #statusMessage {
+            font-size: 16px;
+            color: #ff4a4a;
+            font-weight: bold;
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -152,28 +161,53 @@
             </form>
         </div>
 
+        <div id="statusMessage">Establishing unblocked live database connection...</div>
         <div class="channels-grid" id="channelsGrid"></div>
     </div>
 
     <script>
-        // ====================================================================
-        // DATA BUILT DIRECTLY IN THE FILE (No copying or pasting required!)
-        // ====================================================================
-        let masterChannelsList = [
-            { "name": "MrDragonBeast", "count": 247191 },
-            { "name": "GianlucaStatsV2", "count": 226255 },
-            { "name": "BenGaming", "count": 197993 },
-            { "name": "Dekyy722u", "count": 179239 },
-            { "name": "ai ShowSpeed", "count": 130358 },
-            { "name": "Maria Hernández", "count": 112924 },
-            { "name": "PL Lizy", "count": 110903 },
-            { "name": "RusselJamesGotBanned", "count": 110111 },
-            { "name": "Typewriter102", "count": 97598 },
-            { "name": "bfdifour", "count": 96999 },
-            { "name": "glm", "count": 21516 }
-        ];
+        let masterChannelsList = [];
+        const lceditSaveID = '82558b76-ff7e-1cd8-6b0b-a58ef0d8b020';
 
-        masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
+        // THE RUNTIME RECEIVER HOOK: Safely captures text packets bypassing CORS block walls entirely
+        window.parseStudioFeed = function(payload) {
+            const statusMessage = document.getElementById("statusMessage");
+            try {
+                // Ingest raw data matrix out of lcedit standard parameters layout structure
+                const incomingData = payload.counters || payload.data || payload.channels || [];
+                
+                if (incomingData && incomingData.length > 0) {
+                    masterChannelsList = incomingData;
+                    
+                    // Sort descending automatically on every payload refresh loop so ranks re-calculate on the fly
+                    masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
+                    
+                    if (statusMessage) statusMessage.style.display = "none";
+                    buildDashboardGrid(masterChannelsList);
+                }
+            } catch (err) {
+                console.error("Format compilation conflict mapping object tokens:", err);
+            }
+        };
+
+        function fetchLiveStreamData() {
+            // Generates a script source injection tag containing a cross-origin JSONP callback hook execution
+            const dynamicScript = document.createElement('script');
+            dynamicScript.src = 'https://lcedit.com' + lceditSaveID + '?callback=parseStudioFeed&t=' + Date.now();
+            
+            // Wipe away the previous script wrapper loop elements so the DOM body layout engine stays clean
+            const existingScript = document.getElementById('lcedit-automation-bridge');
+            if (existingScript) existingScript.remove();
+            
+            dynamicScript.id = 'lcedit-automation-bridge';
+            document.body.appendChild(dynamicScript);
+        }
+
+        // Initialize unblocked live bridge connection instantly on web application load
+        fetchLiveStreamData();
+
+        // Quiet background loop queries your stream data account every 5 seconds to instantly parse new !add commands
+        setInterval(fetchLiveStreamData, 5000);
 
         function buildDashboardGrid(listToRender) {
             const grid = document.getElementById("channelsGrid");
@@ -182,7 +216,7 @@
             listToRender.forEach(user => {
                 const trueRank = masterChannelsList.indexOf(user) + 1;
                 const currentCount = Math.floor(Number(user.count || 0));
-                const avatarImg = "https://placeholder.com";
+                const avatarImg = user.image || "https://placeholder.com";
 
                 const card = document.createElement("div");
                 card.className = "channel-card";
@@ -201,23 +235,6 @@
                 grid.appendChild(card);
             });
         }
-
-        buildDashboardGrid(masterChannelsList);
-
-        setInterval(function() {
-            masterChannelsList.forEach((user, index) => {
-                const fluctuation = Math.floor(Math.random() * 40) - 15;
-                if (typeof user.currentRunningCount === 'undefined') {
-                    user.currentRunningCount = Number(user.count || 0);
-                }
-                user.currentRunningCount = Math.max(0, user.currentRunningCount + fluctuation);
-                
-                const cardCountEl = document.getElementById(`card-count-${index + 1}`);
-                if (cardCountEl) {
-                    cardCountEl.textContent = Math.floor(user.currentRunningCount).toLocaleString();
-                }
-            });
-        }, 2000);
 
         function executeSearch() {
             const query = document.getElementById("userInput").value.trim().toLowerCase();
