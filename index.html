@@ -57,9 +57,6 @@
             cursor: pointer;
             font-weight: bold;
         }
-        button.search-btn:hover {
-            background-color: #e03e3e;
-        }
         .channels-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -73,9 +70,6 @@
             padding: 20px;
             position: relative;
             text-align: left;
-        }
-        .channel-card:hover {
-            border-color: #ff4a4a;
         }
         .rank-badge {
             position: absolute;
@@ -140,92 +134,8 @@
             text-decoration: none;
         }
         .action-btn:hover {
-            background-color: #222;
-            color: white;
             border-color: #ff4a4a;
-        }
-        .admin-panel {
-            margin-top: 60px;
-            padding: 25px;
-            background-color: #1e1e1e;
-            border: 2px dashed #ff4a4a; /* Highly visible red dashed border */
-            border-radius: 8px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .admin-panel p {
-            margin: 0 0 15px 0;
-            font-weight: bold;
-            color: #ff4a4a;
-        }
-        textarea {
-            width: 100%;
-            height: 100px;
-            background-color: #121212;
-            color: #ffffff;
-            border: 2px solid #444; /* Solid background you can easily see and click */
-            border-radius: 6px;
-            padding: 12px;
-            box-sizing: border-box;
-            font-family: monospace;
-            font-size: 13px;
-            resize: none;
-            outline: none;
-            margin-bottom: 15px;
-        }
-        textarea:focus {
-            border-color: #ff4a4a;
-        }
-        .sync-btn {
-            background-color: #ff4a4a;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            font-size: 15px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .sync-btn:hover {
-            background-color: #e03e3e;
-        }
-        /* POPUP TRACKER WINDOW */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.85);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 100000;
-            opacity: 0;
-            pointer-events: none;
-        }
-        .modal-overlay.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        .modal-box {
-            background: #1e1e1e;
-            padding: 40px;
-            border-radius: 12px;
-            border: 2px solid #ff4a4a;
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-        }
-        .modal-name {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        .modal-counter {
-            font-size: 48px;
-            font-weight: bold;
-            color: #ff4a4a;
-            font-family: monospace;
-            margin: 20px 0;
+            color: #fff;
         }
     </style>
 </head>
@@ -236,7 +146,6 @@
         <p class="subtitle">Search your channel name to check your standing live</p>
 
         <div class="search-wrapper">
-            <!-- Form prevents refresh on enter key -->
             <form id="searchForm" onsubmit="executeSearch(); return false;" style="display: flex; gap: 10px;">
                 <input type="text" id="userInput" placeholder="Search channel name..." autocomplete="off">
                 <button type="submit" class="search-btn">Search</button>
@@ -244,53 +153,85 @@
         </div>
 
         <div class="channels-grid" id="channelsGrid"></div>
-
-        <!-- MODAL LIVE VIEWER -->
-        <div class="modal-overlay" id="countModal">
-            <div class="modal-box">
-                <div id="modalRank" style="color:#aaaaaa; font-weight:bold; font-size:14px; margin-bottom:10px;">RANK #--</div>
-                <img id="modalAvatar" src="" style="width:80px; height:80px; border-radius:50%; border:2px solid #ff4a4a; object-fit:cover; margin-bottom:15px; background-color:#121212;">
-                <div class="modal-name" id="modalChannelName">Channel Name</div>
-                <div style="font-size:12px; color:#aaaaaa; text-transform:uppercase; margin-top:15px;">Live Subscribers</div>
-                <div class="modal-counter" id="modalCount">0</div>
-                <button type="button" class="action-btn" style="width:100%; margin-top:10px; border-color:#ff4a4a;" id="closeModalBtn">Close Tracker</button>
-            </div>
-        </div>
-
-        <!-- STRIPPED DOWN INPUT MANAGEMENT CONSOLE -->
-        <div class="admin-panel">
-            <p>STREAMER DATA PANEL</p>
-            <textarea id="jsonPasteInput" placeholder="Paste your messy lcedit text block data string here..."></textarea>
-            <br>
-            <button type="button" class="sync-btn" id="syncBtn">Sync Channels Grid</button>
-        </div>
     </div>
 
     <script>
-        let masterChannelsList = [];
-        let activeModalUser = null;
+        // ====================================================================
+        // DATA BUILT DIRECTLY IN THE FILE (No copying or pasting required!)
+        // ====================================================================
+        let masterChannelsList = [
+            { "name": "MrDragonBeast", "count": 247191 },
+            { "name": "GianlucaStatsV2", "count": 226255 },
+            { "name": "BenGaming", "count": 197993 },
+            { "name": "Dekyy722u", "count": 179239 },
+            { "name": "ai ShowSpeed", "count": 130358 },
+            { "name": "Maria Hernández", "count": 112924 },
+            { "name": "PL Lizy", "count": 110903 },
+            { "name": "RusselJamesGotBanned", "count": 110111 },
+            { "name": "Typewriter102", "count": 97598 },
+            { "name": "bfdifour", "count": 96999 },
+            { "name": "glm", "count": 21516 }
+        ];
 
-        // Automatically pulls stored channels if you refresh the website
-        if (localStorage.getItem("fysc_stable_ledger")) {
-            try {
-                masterChannelsList = JSON.parse(localStorage.getItem("fysc_stable_ledger"));
-                masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
-                buildDashboardGrid(masterChannelsList);
-            } catch(e) { console.error(e); }
+        masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
+
+        function buildDashboardGrid(listToRender) {
+            const grid = document.getElementById("channelsGrid");
+            grid.innerHTML = "";
+
+            listToRender.forEach(user => {
+                const trueRank = masterChannelsList.indexOf(user) + 1;
+                const currentCount = Math.floor(Number(user.count || 0));
+                const avatarImg = "https://placeholder.com";
+
+                const card = document.createElement("div");
+                card.className = "channel-card";
+                card.innerHTML = `
+                    <div class="rank-badge">#${trueRank}</div>
+                    <div class="card-header">
+                        <img class="avatar" src="${avatarImg}"><span class="channel-name">${user.name}</span>
+                    </div>
+                    <div class="sub-count-line">
+                        Subscribers: <span class="sub-number" id="card-count-${trueRank}">${currentCount.toLocaleString()}</span>
+                    </div>
+                    <div class="card-actions">
+                        <a class="action-btn" href="https://youtube.com{encodeURIComponent(user.name)}" target="_blank">Go to Channel</a>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
         }
 
-        // Fixed click handling eliminates internal naming block errors
-        document.getElementById("syncBtn").addEventListener("click", function() {
-            const rawText = document.getElementById("jsonPasteInput").value.trim();
-            if (!rawText) return alert("Please paste the data text block first!");
-            try {
-                const parsed = JSON.parse(rawText);
-                const incoming = parsed.counters || parsed.data || parsed.channels || parsed;
-                if (Array.isArray(incoming)) {
-                    masterChannelsList = incoming;
-                    masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
-                    
-                    localStorage.setItem("fysc_stable_ledger", JSON.stringify(masterChannelsList));
-                    buildDashboardGrid(masterChannelsList);
-                    
-                    alert("Success! Loaded total tracked stream entries: " + masterChannelsList.length);
+        buildDashboardGrid(masterChannelsList);
+
+        setInterval(function() {
+            masterChannelsList.forEach((user, index) => {
+                const fluctuation = Math.floor(Math.random() * 40) - 15;
+                if (typeof user.currentRunningCount === 'undefined') {
+                    user.currentRunningCount = Number(user.count || 0);
+                }
+                user.currentRunningCount = Math.max(0, user.currentRunningCount + fluctuation);
+                
+                const cardCountEl = document.getElementById(`card-count-${index + 1}`);
+                if (cardCountEl) {
+                    cardCountEl.textContent = Math.floor(user.currentRunningCount).toLocaleString();
+                }
+            });
+        }, 2000);
+
+        function executeSearch() {
+            const query = document.getElementById("userInput").value.trim().toLowerCase();
+            if (query === "") {
+                buildDashboardGrid(masterChannelsList);
+                return;
+            }
+            const filtered = masterChannelsList.filter(user => 
+                (user.name || "").toString().toLowerCase().includes(query)
+            );
+            buildDashboardGrid(filtered);
+        }
+
+        document.getElementById("userInput").addEventListener("input", executeSearch);
+    </script>
+</body>
+</html>
