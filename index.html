@@ -174,33 +174,30 @@
         let liveUpdateTimer = null;
         let activeUser = null;
 
-        // FIXED LOAD DATA LOOP: Grabs raw text from a secure open-origin text proxy bypass channel
-        async function loadData() {
+        // FIXED BROWSER BYPASS: This function receives the data securely from lcedit
+        window.lceditCallback = function(parsedData) {
             const loadingText = document.getElementById("loadingText");
             try {
-                const targetUrl = 'https://lcedit.com';
-                const proxyUrl = 'https://corsproxy.io?' + encodeURIComponent(targetUrl);
-                
-                const response = await fetch(proxyUrl);
-                const parsedData = await response.json();
-                
-                // CRITICAL STRUCTURAL FIX: Livecountsedit maps the array properties directly to parsedData.data!
+                // Read directly from the raw database container object properties
                 channelsList = parsedData.data || parsedData.channels || [];
                 
-                // Sort all array channels by count descending for dynamic rank syncing
+                // Sort by count descending so ranks calculate perfectly
                 channelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
 
-                if(loadingText) {
+                if (loadingText) {
                     loadingText.style.color = "#888";
                     loadingText.textContent = "Ready! Enter your channel name above.";
                 }
             } catch (e) {
-                console.error("Failed to map data array pipeline cleanly:", e);
-                if(loadingText) {
-                    loadingText.style.color = "#ff4a4a";
-                    loadingText.textContent = "Error loading database feed. Please refresh.";
-                }
+                console.error("Failed parsing database objects:", e);
             }
+        };
+
+        // Inject script file using direct browser callback triggers
+        function loadData() {
+            const script = document.createElement('script');
+            script.src = 'https://lcedit.com' + Date.now();
+            document.body.appendChild(script);
         }
 
         loadData();
@@ -215,7 +212,6 @@
                 return;
             }
 
-            // Scans full list matching text indexes dynamically
             const matches = channelsList.filter(user => {
                 const name = (user.name || "").toString().toLowerCase();
                 return name.includes(inputVal);
@@ -250,7 +246,6 @@
             suggestionsBox.style.display = "block";
         }
 
-        // Close suggestions dropdown if clicking away
         document.addEventListener("click", function(e) {
             if (e.target.id !== "usernameInput") {
                 document.getElementById("suggestionsBox").style.display = "none";
@@ -286,3 +281,9 @@
             
             if (activeUser) {
                 if (typeof activeUser.currentRunningCount === 'undefined') {
+                    activeUser.currentRunningCount = Number(activeUser.count || activeUser.lastCount || 0);
+                }
+
+                renderUserCard();
+                
+                const updateRateMs = 2000; // Live ticker speed sync matching overlay animations
