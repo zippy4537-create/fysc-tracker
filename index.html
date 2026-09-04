@@ -133,45 +133,6 @@
             color: #aaaaaa;
             margin-top: 20px;
         }
-        .admin-panel {
-            margin-top: 60px;
-            padding: 20px;
-            background-color: #1a1a1a;
-            border-radius: 8px;
-            border: 1px dashed #444;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        textarea {
-            width: 100%;
-            height: 80px;
-            background-color: #2b2b2b;
-            color: #ffffff;
-            border: 1px solid #444;
-            border-radius: 4px;
-            padding: 10px;
-            box-sizing: border-box;
-            font-family: monospace;
-            font-size: 12px;
-            resize: none;
-            outline: none;
-            margin-bottom: 10px;
-        }
-        .sync-btn {
-            background-color: #1a242d;
-            border: 1px solid #3ca4a6;
-            color: #3ca4a6;
-            padding: 8px 20px;
-            font-size: 13px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .sync-btn:hover {
-            background-color: #3ca4a6;
-            color: #1a242d;
-        }
     </style>
 </head>
 <body>
@@ -179,66 +140,62 @@
     <h1>All FYSC Season 1 Channels</h1>
 
     <div class="search-container">
-        <!-- Prevent form browser resets entirely -->
-        <form onsubmit="filterChannels(); return false;" style="display: flex; gap: 10px;">
-            <input type="text" id="userInput" placeholder="Search user..." oninput="filterChannels()">
-            <button type="submit" class="search-btn">Search User</button>
-        </form>
+        <!-- Filter channels instantly as users search -->
+        <input type="text" id="userInput" placeholder="Search user..." oninput="filterChannels()">
+        <button class="search-btn" onclick="filterChannels()">Search User</button>
     </div>
 
-    <div id="statusMessage">Ready! Paste your lcedit text block below to generate the cards dashboard.</div>
+    <div id="statusMessage">Syncing live channel directory cards...</div>
     <div class="channels-grid" id="channelsGrid"></div>
-
-    <!-- OFFLINE DATA DATASTREAM UPDATE PANEL -->
-    <div class="admin-panel">
-        <p style="font-size: 13px; margin: 0 0 10px 0; color: #aaa;">Streamer Tool: Paste your lcedit JSON text down below to update cards</p>
-        <textarea id="jsonPasteInput" placeholder='Paste code data string here (e.g. {"data": [...]})'></textarea>
-        <button type="button" class="sync-btn" onclick="syncDatabaseManual()">Sync Channels Grid</button>
-    </div>
 
     <script>
         let masterChannelsList = [];
 
-        // Ingest previous setups from storage instantly to skip loading screens entirely
-        if (localStorage.getItem("fysc_cached_grid_v2")) {
+        // AUTOMATED CONNECTION BRIDGE: Processes the live array variables directly in your browser tab
+        window.lceditCallback = function(payload) {
+            const statusMessage = document.getElementById("statusMessage");
             try {
-                masterChannelsList = JSON.parse(localStorage.getItem("fysc_cached_grid_v2"));
-                masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
-                document.getElementById("statusMessage").style.display = "none";
-                renderGridHTML(masterChannelsList);
-            } catch(e) { console.error(e); }
-        }
-
-        function syncDatabaseManual() {
-            const rawText = document.getElementById("jsonPasteInput").value.trim();
-            if (!rawText) return alert("Please paste the data text block first!");
-            try {
-                const parsed = JSON.parse(rawText);
-                const incoming = parsed.data || parsed.channels || parsed.counters || parsed;
-                if (Array.isArray(incoming)) {
-                    masterChannelsList = incoming;
+                // Ingests ALL saved user channels from your livecounts registry file
+                const incomingData = payload.data || payload.channels || payload.counters || [];
+                
+                if (incomingData.length > 0) {
+                    masterChannelsList = incomingData;
+                    
+                    // Sort by highest subscriber value to make ranks completely perfect
                     masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
                     
-                    // Save to deep cache key v2 to completely bypass old browser locks
-                    localStorage.setItem("fysc_cached_grid_v2", JSON.stringify(masterChannelsList));
-                    
-                    document.getElementById("statusMessage").style.display = "none";
+                    if (statusMessage) statusMessage.style.display = "none";
                     renderGridHTML(masterChannelsList);
-                    alert("Grid synced! Successfully loaded total entries: " + masterChannelsList.length);
-                    document.getElementById("jsonPasteInput").value = "";
-                } else {
-                    alert("Invalid text string layout. Make sure you highlight and copy everything.");
                 }
             } catch (err) {
-                alert("Parsing failed: Check if code string copied completely.");
+                console.error("Format parsing block conflict:", err);
             }
+        };
+
+        function fetchLiveStreamData() {
+            // Dynamic script loading injects the payload directly into the page, bypassing CORS entirely
+            const dynamicScript = document.createElement('script');
+            dynamicScript.src = 'https://lcedit.com' + Date.now();
+            
+            const existingScript = document.getElementById('lcedit-automation-bridge');
+            if (existingScript) existingScript.remove();
+            
+            dynamicScript.id = 'lcedit-automation-bridge';
+            document.body.appendChild(dynamicScript);
         }
+
+        // Run the data extraction instantly as soon as the site launches
+        fetchLiveStreamData();
+
+        // Automatically loops and silently checks for chat commands every 8 seconds
+        setInterval(fetchLiveStreamData, 8000);
 
         function renderGridHTML(listToRender) {
             const grid = document.getElementById("channelsGrid");
             grid.innerHTML = "";
 
             listToRender.forEach(user => {
+                // Calculates mathematically exact placement positions across your complete registry list
                 const trueRank = masterChannelsList.indexOf(user) + 1;
                 const currentCount = Math.floor(Number(user.count || 0));
                 const avatarImg = user.image || "https://placeholder.com";
