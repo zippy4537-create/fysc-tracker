@@ -156,7 +156,8 @@
         <h1>FYSC Season 1</h1>
         <p class="subtitle">Search your channel name to check your standing live</p>
         
-        <form id="searchForm" onsubmit="handleFormSubmit(event); return false;">
+        <!-- FIX: Stripped out inline block code error conflict triggers -->
+        <form onsubmit="handleFormSubmit(event)">
             <div class="search-wrapper">
                 <input type="text" id="usernameInput" placeholder="Enter Channel Name" autocomplete="off" oninput="handleInputDrawing()">
                 <div class="suggestions-box" id="suggestionsBox"></div>
@@ -170,10 +171,9 @@
     </div>
 
     <script>
-        // =========================================================
-        // ADD YOUR CHANNEL DATA PROFILES DIRECTLY HERE!
-        // This ensures the site works immediately without network lag.
-        // =========================================================
+        // ==========================================
+        // CHANNEL DATABASE STORAGE
+        // ==========================================
         let channelsList = [
             { "name": "GianlucaStatsV2", "count": 224880, "min_gain": 5, "max_gain": 15 },
             { "name": "MrDragonBeast", "count": 219689, "min_gain": 4, "max_gain": 12 },
@@ -182,13 +182,12 @@
             { "name": "ai ShowSpeed", "count": 128895, "min_gain": 1, "max_gain": 5 },
             { "name": "glm", "count": 21516, "min_gain": 1, "max_gain": 4 },
             { "name": "Oliwer maxi", "count": 29685, "min_gain": -2, "max_gain": 6 }
-            // You can add rows for your viewers below this line
         ];
 
         let liveUpdateTimer = null;
         let activeUser = null;
 
-        // Auto-sort list instantly by count to dynamically calculate ranks
+        // Auto-sort list layout cleanly descending mapping parameters
         channelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
 
         function handleInputDrawing() {
@@ -242,9 +241,11 @@
         });
 
         function handleFormSubmit(event) {
-            event.preventDefault();
+            // Securely blocks full-page refresh loops
+            event.preventDefault(); 
             document.getElementById("suggestionsBox").style.display = "none";
             startLiveTracking();
+            return false;
         }
 
         function startLiveTracking() {
@@ -264,7 +265,7 @@
             });
             
             if (activeUser) {
-                if (typeof activeUser.currentRunningCount === 'undefined') {
+                if (typeof activeUser.currentRunningCount === 'undefined' || isNaN(activeUser.currentRunningCount)) {
                     activeUser.currentRunningCount = Number(activeUser.count || 0);
                 }
 
@@ -284,3 +285,5 @@
 
         function renderUserCard() {
             const resultDiv = document.getElementById("resultArea");
+            const displayCount = Math.floor(activeUser.currentRunningCount);
+            
