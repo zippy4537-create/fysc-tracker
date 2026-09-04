@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FYSC Live Statistics - Realtime Sync</title>
+    <title>FYSC Live Statistics - Realtime Sync Engine</title>
     <link rel="stylesheet" href="https://googleapis.com">
     <style>
         body {
@@ -87,6 +87,7 @@
             color: #ff4a4a;
             font-weight: bold;
             font-size: 32px;
+            transition: color 0.15s ease-in-out;
         }
         .live-indicator {
             display: inline-block;
@@ -120,13 +121,18 @@
     </div>
 
     <script>
-        // Connected directly to your active lcedit dashboard registry stream
+        // Connected directly to your active lcedit dashboard cloud database
         const streamId = "81969dc3-7249-47f7-8554-8d0bb8c33800"; 
 
         let globalLiveTimer = null;
+        let localTickerTimer = null;
+        let activeUser = null;
+        let updateRateMs = 2000; // Synchronized layout update interval timer rate (2000ms = 2s)
 
-        function startLiveTracking() {
+        async function startLiveTracking() {
+            // Kill any active running interval execution loops on user re-submission
             clearInterval(globalLiveTimer);
+            clearInterval(localTickerTimer);
 
             const searchInput = document.getElementById("usernameInput").value.trim();
             const resultDiv = document.getElementById("resultArea");
@@ -136,51 +142,99 @@
                 return;
             }
 
-            resultDiv.innerHTML = "<p>Connecting to lcedit cloud registry stream...</p>";
+            resultDiv.innerHTML = "<p>Connecting to lcedit cloud pipeline...</p>";
 
-            // Fetch live data immediately
-            fetchLiveCloudData(searchInput);
+            // Fetch current baseline counts from cloud server immediately on execution
+            await syncWithCloudDatabase(searchInput, true);
 
-            // Ticks and synchronizes with lcedit.com data endpoints every 2 seconds
-            globalLiveTimer = setInterval(() => {
-                fetchLiveCloudData(searchInput);
-            }, 2000);
+            // Keep cloud sync polling running every 15 seconds to catch new additions automatically
+            globalLiveTimer = setInterval(async () => {
+                await syncWithCloudDatabase(username, false);
+            }, 15000);
         }
 
-        async function fetchLiveCloudData(username) {
-            const resultDiv = document.getElementById("resultArea");
+        async function syncWithCloudDatabase(username, isFirstLoad) {
             try {
+                // Force a non-cached live endpoint fetch from livecountsedit cloud servers
                 const response = await fetch(`https://lcedit.com{streamId}/?t=${Date.now()}`);
                 const parsedData = await response.json();
                 
                 const channelsList = parsedData.data || parsedData.counters || [];
-                
                 const foundUser = channelsList.find(user => (user.name || "").trim().toLowerCase() === username.toLowerCase());
                 
                 if (foundUser) {
-                    const userSubs = Math.floor(foundUser.count || foundUser.lastCount || 0);
-                    const userRank = foundUser.rank || (channelsList.indexOf(foundUser) + 1);
-                    const userImage = foundUser.image || "https://ggpht.com";
+                    // Extract updateInterval values from lcedit JSON string to sync ticking speed
+                    if (parsedData.updateInterval) {
+                        updateRateMs = Number(parsedData.updateInterval);
+                    }
 
-                    resultDiv.innerHTML = `
-                        <img class="avatar" src="${userImage}" alt="Avatar">
-                        <div class="stat-line">Channel: <span style="font-weight:bold; color:white;">${foundUser.name}</span></div>
-                        <div class="stat-line">Rank: <span class="highlight">#${userRank}</span></div>
-                        <div class="stat-line">Subscribers: <span class="highlight">${userSubs.toLocaleString()}</span></div>
-                        <div class="stat-line" style="font-size:12px; color:#148c50; margin-top:8px; display:flex; align-items:center; justify-content:center;">
-                            <span class="live-indicator"></span> Synced 1:1 with lcedit Dashboard
-                        </div>
-                    `;
-                } else {
-                    resultDiv.innerHTML = `
+                    const incomingCount = Math.floor(foundUser.count || foundUser.lastCount || 0);
+
+                    if (isFirstLoad) {
+                        activeUser = foundUser;
+                        activeUser.currentRunningCount = incomingCount;
+                        renderUserCard();
+                        
+                        // Begin the matching local odometer mathematical calculations loops
+                        localTickerTimer = setInterval(() => {
+                            executeOdometerTick();
+                        }, updateRateMs);
+                    } else {
+                        // Smoothly calibrate the active running count to match the master cloud value if drifting occurs
+                        if (Math.abs(activeUser.currentRunningCount - incomingCount) > 25) {
+                            activeUser.currentRunningCount = incomingCount;
+                        }
+                        // Refresh non-count profile metadata details behind the scenes
+                        activeUser.rank = foundUser.rank || (channelsList.indexOf(foundUser) + 1);
+                        activeUser.image = foundUser.image;
+                    }
+                } else if (isFirstLoad) {
+                    document.getElementById("resultArea").innerHTML = `
                         <p style="color: #ff4a4a; font-weight: bold; margin: 0 0 10px 0;">User not found!</p>
                         <p style="font-size: 14px; color: #aaa; margin: 0;">Make sure they have joined via stream command registry.</p>
                     `;
+                    clearInterval(globalLiveTimer);
+                    clearInterval(localTickerTimer);
                 }
             } catch (e) {
-                console.error("Failed to fetch live cloud data stream:", e);
+                console.error("Cloud tracking synchronization dropped:", e);
             }
         }
-    </script>
-</body>
-</html>
+
+        function renderUserCard() {
+            const resultDiv = document.getElementById("resultArea");
+            const displayCount = Math.floor(activeUser.currentRunningCount);
+            const userRank = activeUser.rank || "Tracking";
+            const userImage = activeUser.image || "https://ggpht.com";
+
+            resultDiv.innerHTML = `
+                <img class="avatar" src="${userImage}" alt="Avatar">
+                <div class="stat-line">Channel: <span style="font-weight:bold; color:white;">${activeUser.name}</span></div>
+                <div class="stat-line">Rank: <span style="font-weight:bold; color:white;">#${userRank}</span></div>
+                <div class="stat-line">Subscribers: <span class="highlight" id="liveCounter">${displayCount.toLocaleString()}</span></div>
+                <div class="stat-line" style="font-size:12px; color:#148c50; margin-top:8px; display:flex; align-items:center; justify-content:center;">
+                    <span class="live-indicator"></span> Synced 1:1 with lcedit Dashboard
+                </div>
+            `;
+        }
+
+        function executeOdometerTick() {
+            if (!activeUser) return;
+
+            // Extract the user's signature min_gain/max_gain parameters from your lcedit save profile
+            const minGain = typeof activeUser.min_gain !== 'undefined' ? Number(activeUser.min_gain) : -3;
+            const maxGain = typeof activeUser.max_gain !== 'undefined' ? Number(activeUser.max_gain) : 5;
+            
+            // Replicate the random algorithmic values generated on your master dashboard
+            const change = Math.floor(Math.random() * (maxGain - minGain + 1)) + minGain;
+            
+            activeUser.currentRunningCount += change;
+
+            const counterElement = document.getElementById("liveCounter");
+            if (counterElement) {
+                counterElement.innerText = Math.floor(activeUser.currentRunningCount).toLocaleString();
+                
+                // Trigger dynamic odometer layout color flashes
+                if (change > 0) {
+                    counterElement.style.color = "#148c50"; // Green for up-ticks
+                } else if (change < 0) {
