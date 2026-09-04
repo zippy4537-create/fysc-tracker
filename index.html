@@ -180,55 +180,65 @@
         </form>
     </div>
 
-    <!-- ULTIMATE FALLBACK: Forcing the text node string value parameter directly inside the container layout element -->
-    <div id="statusMessage" style="font-size: 16px; color: #aaaaaa; margin-top: 20px;">Ready! Paste your lcedit text data into the tool below to generate the cards dashboard.</div>
+    <div id="statusMessage" style="font-size: 16px; color: #aaaaaa; margin-top: 20px; display: none;">Ready!</div>
     <div class="channels-grid" id="channelsGrid"></div>
 
-    <div class="admin-panel">
-        <p style="font-size: 13px; margin: 0 0 10px 0; color: #aaa;">Streamer tool: Paste data from your lcedit link here to refresh all layout cards instantly</p>
-        <textarea id="jsonPasteInput" placeholder="Open your lcedit link in a new tab, copy everything, and paste it here..."></textarea>
-        <button type="button" class="sync-btn" onclick="syncDatabaseManual()">Sync Channels Grid</button>
+    <!-- Hidden admin dashboard control section panel block -->
+    <div class="admin-panel" style="margin-top:80px; opacity: 0.15;">
+        <p style="font-size: 13px; margin: 0 0 10px 0; color: #aaa;">Streamer override channel array backup panel config sync:</p>
+        <textarea id="jsonPasteInput" placeholder="Paste updated text data string values here to force override cache logs..."></textarea>
+        <button type="button" class="sync-btn" onclick="syncDatabaseManual()">Force Update</button>
     </div>
 
     <script>
-        let masterChannelsList = [];
+        // =========================================================================
+        // LIVE BUILT-IN DATABASE SOURCE
+        // Your current stream data is fully hardcoded right into the site body!
+        // =========================================================================
+        let masterChannelsList = [
+            { "name": "titouc", "count": 583132284939 },
+            { "name": "ilikecharliekirk", "count": 223643810933 },
+            { "name": "Omegalayer", "count": 216571617971 },
+            { "name": "アティーン", "count": 203887475379 },
+            { "name": "Suika", "count": 100075971157 },
+            { "name": "Stevred", "count": 96050581035 },
+            { "name": "Canal KondZilla", "count": 64994668633 },
+            { "name": "YouTube Statistics", "count": 58953116748 },
+            { "name": "FriendZAYY", "count": 50495252266 },
+            { "name": "isaac", "count": 38713045958 },
+            { "name": "glm", "count": 21516000 },
+            { "name": "GianlucaStatsV2", "count": 224880 },
+            { "name": "MrDragonBeast", "count": 219689 },
+            { "name": "BenGaming", "count": 196409 },
+            { "name": "Dekyy722u", "count": 177622 },
+            { "name": "ai ShowSpeed", "count": 128895 }
+        ];
 
-        // Check the local memory database storage block to draw elements immediately
-        if (localStorage.getItem("fysc_clean_grid_v5")) {
+        // Read alternative browser override values if you decide to alter rows down the line
+        if (localStorage.getItem("fysc_final_grid_source")) {
             try {
-                masterChannelsList = JSON.parse(localStorage.getItem("fysc_clean_grid_v5"));
-                masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
-                document.getElementById("statusMessage").style.display = "none";
-                renderGridHTML(masterChannelsList);
-            } catch(e) { console.error(e); }
-        } else {
-            // Absolute forced break: Clear the loading block text even if storage is blank
-            document.getElementById("statusMessage").textContent = "Ready! Paste your lcedit data block string down below.";
+                masterChannelsList = JSON.parse(localStorage.getItem("fysc_final_grid_source"));
+            } catch(e) {}
         }
+
+        // Align positions sorting descending automatically
+        masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
 
         function syncDatabaseManual() {
             const rawText = document.getElementById("jsonPasteInput").value.trim();
-            if (!rawText) return alert("Please paste the data text block first!");
+            if (!rawText) return alert("Paste your data text block first!");
             try {
                 const parsed = JSON.parse(rawText);
                 const incoming = parsed.counters || parsed.data || parsed.channels || parsed;
                 if (Array.isArray(incoming)) {
                     masterChannelsList = incoming;
                     masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
-                    
-                    // Distinct version key (v5) completely maps past cache blocks
-                    localStorage.setItem("fysc_clean_grid_v5", JSON.stringify(masterChannelsList));
-                    
-                    document.getElementById("statusMessage").style.display = "none";
+                    localStorage.setItem("fysc_final_grid_source", JSON.stringify(masterChannelsList));
                     renderGridHTML(masterChannelsList);
-                    alert("Grid updated successfully! Loaded total entries: " + masterChannelsList.length);
+                    alert("Dashboard template updated directly! Total loaded records: " + masterChannelsList.length);
                     document.getElementById("jsonPasteInput").value = "";
-                } else {
-                    alert("Data format error. Make sure you highlighted and copied everything from the link.");
                 }
-            } catch (err) {
-                alert("Text read error: Check if text was copied completely.");
-            }
+            } catch (err) { alert("Parse Error"); }
         }
 
         function renderGridHTML(listToRender) {
@@ -261,10 +271,3 @@
             });
         }
 
-        function filterChannels() {
-            const query = document.getElementById("userInput").value.trim().toLowerCase();
-            if (query === "") {
-                renderGridHTML(masterChannelsList);
-                return;
-            }
-            const filtered = masterChannelsList.filter(user => 
