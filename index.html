@@ -156,7 +156,7 @@
         <h1>FYSC Season 1</h1>
         <p class="subtitle">Search your channel name to check your standing live</p>
         
-        <form onsubmit="handleFormSubmit(event); return false;">
+        <form id="searchForm" onsubmit="handleFormSubmit(event); return false;">
             <div class="search-wrapper">
                 <input type="text" id="usernameInput" placeholder="Enter Channel Name" autocomplete="off" oninput="handleInputDrawing()">
                 <div class="suggestions-box" id="suggestionsBox"></div>
@@ -170,23 +170,25 @@
     </div>
 
     <script>
-        // ==========================================
-        // ADD YOUR CHANNEL DATA PROFILES BELOW HERE!
-        // ==========================================
+        // =========================================================
+        // ADD YOUR CHANNEL DATA PROFILES DIRECTLY HERE!
+        // This ensures the site works immediately without network lag.
+        // =========================================================
         let channelsList = [
             { "name": "GianlucaStatsV2", "count": 224880, "min_gain": 5, "max_gain": 15 },
             { "name": "MrDragonBeast", "count": 219689, "min_gain": 4, "max_gain": 12 },
             { "name": "BenGaming", "count": 196409, "min_gain": 3, "max_gain": 10 },
             { "name": "Dekyy722u", "count": 177622, "min_gain": 2, "max_gain": 8 },
             { "name": "ai ShowSpeed", "count": 128895, "min_gain": 1, "max_gain": 5 },
+            { "name": "glm", "count": 21516, "min_gain": 1, "max_gain": 4 },
             { "name": "Oliwer maxi", "count": 29685, "min_gain": -2, "max_gain": 6 }
-            // You can paste as many rows as you want below this line for people outside the top 50
+            // You can add rows for your viewers below this line
         ];
 
         let liveUpdateTimer = null;
         let activeUser = null;
 
-        // Auto-sort list immediately by count to dynamically calculate ranks
+        // Auto-sort list instantly by count to dynamically calculate ranks
         channelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
 
         function handleInputDrawing() {
@@ -282,8 +284,3 @@
 
         function renderUserCard() {
             const resultDiv = document.getElementById("resultArea");
-            const displayCount = Math.floor(activeUser.currentRunningCount);
-            
-            const index = channelsList.indexOf(activeUser);
-            const userRank = index !== -1 ? index + 1 : "Tracking";
-            
