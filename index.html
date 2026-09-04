@@ -110,10 +110,12 @@
         <h1>FYSC Season 1</h1>
         <p class="subtitle">Search your channel name to check your standing live</p>
         
-        <!-- Added unique id container target mapping for keyboard captures -->
-        <input type="text" id="usernameInput" placeholder="Enter Channel Name">
-        <br>
-        <button id="searchButton" onclick="startLiveTracking()">Search Channel</button>
+        <!-- WRAPPED SEARCH IN A FORM TO HANDLE NATIVE KEYBOARD SUBMISSIONS -->
+        <form onsubmit="handleFormSubmit(event)">
+            <input type="text" id="usernameInput" placeholder="Enter Channel Name" autocomplete="off">
+            <br>
+            <button type="submit">Search Channel</button>
+        </form>
         
         <div class="result-box" id="resultArea">
             <p style="color: #666; margin: 0;">Ready! Enter your channel name above.</p>
@@ -121,18 +123,16 @@
     </div>
 
     <script>
-        // Linked directly to your live stream lcedit project instance cloud link
+        // Connected directly to your active lcedit dashboard registry cloud stream link
         const streamId = "81969dc3-7249-47f7-8554-8d0bb8c33800"; 
 
         let globalLiveTimer = null;
 
-        // FIXED KEYBOARD ACTION LISTENER: Catches the Enter key explicitly
-        document.getElementById("usernameInput").addEventListener("keydown", function(event) {
-            if (event.key === "Enter") {
-                event.preventDefault(); // Stop standard form page refreshes
-                startLiveTracking();     // Run the active cloud query
-            }
-        });
+        // Form handler prevents standard page refresh and kicks off live stream tracking sequence
+        function handleFormSubmit(event) {
+            event.preventDefault();
+            startLiveTracking();
+        }
 
         function startLiveTracking() {
             clearInterval(globalLiveTimer);
@@ -150,7 +150,7 @@
             // Fetch live data instantly on execution
             fetchLiveCloudData(searchInput);
 
-            // Keeps searching lcedit.com data endpoints every 2 seconds automatically
+            // Keeps tracking data endpoints from lcedit every 2 seconds automatically
             globalLiveTimer = setInterval(() => {
                 fetchLiveCloudData(searchInput);
             }, 2000);
