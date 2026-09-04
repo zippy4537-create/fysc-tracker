@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FYSC Season 1 Channels - Live Engine</title>
-    <link rel="stylesheet" href="https://googleapis.com">
     <style>
         body {
-            font-family: 'Roboto', 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Roboto, sans-serif;
             background-color: #121212;
             color: #ffffff;
             text-align: center;
@@ -77,19 +76,9 @@
             display: flex;
             align-items: center;
         }
-        .suggestion-item:last-child {
-            border-bottom: none;
-        }
         .suggestion-item:hover {
             background-color: #ff4a4a;
             color: white;
-        }
-        .suggestion-avatar {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            margin-right: 10px;
-            border: 1px solid #ff4a4a;
         }
         button {
             padding: 12px 30px;
@@ -132,7 +121,6 @@
             color: #ff4a4a;
             font-weight: bold;
             font-size: 32px;
-            transition: color 0.15s ease-in-out;
         }
         .live-indicator {
             display: inline-block;
@@ -156,8 +144,8 @@
         <h1>FYSC Season 1</h1>
         <p class="subtitle">Search your channel name to check your standing live</p>
         
-        <!-- FIX: Stripped out inline block code error conflict triggers -->
-        <form onsubmit="handleFormSubmit(event)">
+        <!-- The form submission now links straight to our tracking function -->
+        <form onsubmit="startLiveTracking(); return false;">
             <div class="search-wrapper">
                 <input type="text" id="usernameInput" placeholder="Enter Channel Name" autocomplete="off" oninput="handleInputDrawing()">
                 <div class="suggestions-box" id="suggestionsBox"></div>
@@ -172,7 +160,7 @@
 
     <script>
         // ==========================================
-        // CHANNEL DATABASE STORAGE
+        // YOUR CHANNELS DIRECTORY
         // ==========================================
         let channelsList = [
             { "name": "GianlucaStatsV2", "count": 224880, "min_gain": 5, "max_gain": 15 },
@@ -187,7 +175,7 @@
         let liveUpdateTimer = null;
         let activeUser = null;
 
-        // Auto-sort list layout cleanly descending mapping parameters
+        // Sort automatically right away
         channelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
 
         function handleInputDrawing() {
@@ -215,12 +203,7 @@
             matches.forEach(user => {
                 const item = document.createElement("div");
                 item.className = "suggestion-item";
-                
-                const avatarUrl = user.image || "https://placeholder.com";
-                item.innerHTML = `
-                    <img class="suggestion-avatar" src="${avatarUrl}">
-                    <span>${user.name}</span>
-                `;
+                item.innerHTML = `<span>${user.name}</span>`;
                 
                 item.onclick = function() {
                     document.getElementById("usernameInput").value = user.name;
@@ -240,15 +223,9 @@
             }
         });
 
-        function handleFormSubmit(event) {
-            // Securely blocks full-page refresh loops
-            event.preventDefault(); 
-            document.getElementById("suggestionsBox").style.display = "none";
-            startLiveTracking();
-            return false;
-        }
-
         function startLiveTracking() {
+            // Close autocomplete box safely
+            document.getElementById("suggestionsBox").style.display = "none";
             clearInterval(liveUpdateTimer);
 
             const searchInput = document.getElementById("usernameInput").value.trim().toLowerCase();
@@ -287,3 +264,13 @@
             const resultDiv = document.getElementById("resultArea");
             const displayCount = Math.floor(activeUser.currentRunningCount);
             
+            const index = channelsList.indexOf(activeUser);
+            const userRank = index !== -1 ? index + 1 : "Tracking";
+            
+            const userImage = "https://placeholder.com";
+
+            resultDiv.innerHTML = `
+                <img class="avatar" src="${userImage}" alt="Avatar">
+                <div class="stat-line">Channel: <span style="font-weight:bold; color:white;">${activeUser.name}</span></div>
+                <div class="stat-line">Rank: <span class="highlight">#${userRank}</span></div>
+                <div class="stat-line">Subscribers: <span class="highlight" id="liveCounter">${displayCount.toLocaleString()}</span></div>
