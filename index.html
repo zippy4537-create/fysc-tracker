@@ -3,292 +3,231 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FYSC Season 1 Leaderboard Search</title>
+    <title>All FYSC Season 1 Channels</title>
     <style>
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background-color: #0f0f0f;
+            font-family: Arial, sans-serif;
+            background-color: #222222;
             color: #ffffff;
-            text-align: center;
-            padding: 50px 20px;
             margin: 0;
-        }
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            background-color: #1f1f1f;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-            position: relative;
+            padding: 40px 20px;
+            text-align: center;
         }
         h1 {
-            color: #ff0000;
-            margin-bottom: 5px;
-            font-size: 32px;
-            font-weight: bold;
+            font-size: 36px;
+            margin-bottom: 30px;
         }
-        .subtitle {
-            color: #aaaaaa;
-            margin-bottom: 25px;
-            font-size: 14px;
-        }
-        .search-panel {
-            position: relative;
-            width: 90%;
-            margin: 0 auto;
+        .search-container {
+            margin-bottom: 40px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
         }
         input[type="text"] {
-            width: 100%;
-            padding: 14px;
-            font-size: 16px;
-            border: 2px solid #333;
-            border-radius: 8px;
-            background-color: #2b2a2a;
-            color: white;
+            background-color: #1a242d;
+            border: 1px solid #3ca4a6;
+            color: #ffffff;
+            padding: 10px 15px;
+            font-size: 14px;
+            border-radius: 4px;
+            width: 250px;
             outline: none;
-            text-align: center;
-            box-sizing: border-box;
         }
-        input[type="text"]:focus {
-            border-color: #ff0000;
-        }
-        .suggestions-box {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background-color: #252525;
-            border: 2px solid #333;
-            border-top: none;
-            border-radius: 0 0 8px 8px;
-            max-height: 220px;
-            overflow-y: auto;
-            z-index: 9999;
-            display: none;
-            text-align: left;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.6);
-        }
-        .suggestion-item {
-            padding: 12px 15px;
-            cursor: pointer;
-            color: #ddd;
-            font-size: 15px;
-            border-bottom: 1px solid #333;
-        }
-        .suggestion-item:last-child {
-            border-bottom: none;
-        }
-        .suggestion-item:hover {
-            background-color: #ff0000;
-            color: white;
-        }
-        .search-btn {
-            margin-top: 15px;
-            padding: 12px 35px;
-            font-size: 16px;
-            background-color: #ff0000;
-            color: white;
-            border: none;
-            border-radius: 6px;
+        button.search-btn {
+            background-color: #1a242d;
+            border: 1px solid #3ca4a6;
+            color: #3ca4a6;
+            padding: 10px 25px;
+            font-size: 14px;
+            border-radius: 4px;
             cursor: pointer;
             font-weight: bold;
-            transition: 0.2s;
         }
-        .search-btn:hover {
-            background-color: #cc0000;
+        button.search-btn:hover {
+            background-color: #3ca4a6;
+            color: #1a242d;
         }
-        .result-box {
-            margin-top: 30px;
-            padding: 25px;
-            border-radius: 8px;
-            background-color: #151515;
-            min-height: 140px;
+        .channels-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .channel-card {
+            background-color: #2d2d2d;
+            border-radius: 6px;
+            padding: 15px;
+            position: relative;
+            text-align: left;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            border: 1px solid #3d3d3d;
+        }
+        .rank-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: #00bcd4;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        .card-header {
             display: flex;
-            flex-direction: column;
-            justify-content: center;
             align-items: center;
-            border: 1px solid #252525;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            gap: 10px;
         }
         .avatar {
-            width: 75px;
-            height: 75px;
-            border-radius: 50%;
-            margin-bottom: 12px;
-            border: 2px solid #ff0000;
-        }
-        .stat-line {
-            font-size: 18px;
-            margin: 6px 0;
-            color: #ddd;
-        }
-        .highlight {
-            color: #ff0000;
-            font-weight: bold;
-            font-size: 34px;
-            letter-spacing: -1px;
-        }
-        .live-indicator {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background-color: #148c50;
-            border-radius: 50%;
-            margin-right: 6px;
-            animation: blink 1.5s infinite;
-        }
-        @keyframes blink {
-            0% { opacity: 0.3; }
-            50% { opacity: 1; }
-            100% { opacity: 0.3; }
-        }
-        .streamer-tools {
-            margin-top: 40px;
-            padding: 15px;
-            background: #151515;
-            border-radius: 8px;
-            border: 1px dashed #333;
-        }
-        .streamer-tools p {
-            font-size: 12px;
-            margin: 0 0 10px 0;
-            color: #888;
-        }
-        textarea {
-            width: 100%;
-            height: 60px;
-            background: #252525;
-            color: #fff;
-            border: 1px solid #333;
+            width: 55px;
+            height: 55px;
             border-radius: 4px;
+            object-fit: cover;
+            background-color: #444;
+        }
+        .channel-name {
+            font-size: 14px;
+            font-weight: bold;
+            word-break: break-word;
+            color: #ffffff;
+        }
+        .sub-count-line {
+            font-size: 12px;
+            color: #aaaaaa;
+            margin-bottom: 15px;
+        }
+        .sub-number {
+            color: #ffffff;
+            font-weight: bold;
+            display: block;
+            font-size: 15px;
+            margin-top: 2px;
+        }
+        .card-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .action-btn {
+            background-color: #1a242d;
+            border: 1px solid #3ca4a6;
+            color: #3ca4a6;
             padding: 8px;
-            box-sizing: border-box;
-            font-family: monospace;
-            font-size: 11px;
-            resize: none;
-            outline: none;
-        }
-        textarea:focus {
-            border-color: #ff0000;
-        }
-        .sync-btn {
-            background-color: #333;
-            color: #aaa;
-            border: 1px solid #444;
-            padding: 6px 14px;
             font-size: 12px;
             border-radius: 4px;
             cursor: pointer;
-            margin-top: 8px;
+            text-align: center;
             font-weight: bold;
+            text-decoration: none;
+            transition: 0.15s;
         }
-        .sync-btn:hover {
-            background-color: #444;
-            color: #fff;
+        .action-btn:hover {
+            background-color: #3ca4a6;
+            color: #1a242d;
+        }
+        #statusMessage {
+            font-size: 16px;
+            color: #aaaaaa;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>FYSC Season 1</h1>
-        <p class="subtitle">Search your channel name to check your standing live</p>
-        
-        <!-- form tag with return false strictly stops page refreshes -->
-        <form onsubmit="executeChannelSearch(); return false;">
-            <div class="search-panel">
-                <input type="text" id="usernameInput" placeholder="Enter Channel Name" autocomplete="off" oninput="showLiveSuggestions()">
-                <div class="suggestions-box" id="suggestionsBox"></div>
-            </div>
-            <button type="submit" class="search-btn">Search Channel</button>
-        </form>
-        
-        <div class="result-box" id="resultArea">
-            <p style="color: #888; margin: 0;" id="mainStatusText">Ready! Update your channel list below.</p>
-        </div>
+    <h1>All FYSC Season 1 Channels</h1>
 
-        <div class="streamer-tools">
-            <p>Streamer Sync Tool (Paste your raw lcedit API text below)</p>
-            <textarea id="jsonPasteBox" placeholder="Paste text here..."></textarea>
-            <button type="button" class="sync-btn" onclick="processDatabaseSync()">Sync Leaderboard</button>
-        </div>
+    <div class="search-container">
+        <input type="text" id="userInput" placeholder="Search user..." oninput="filterChannels()">
+        <button class="search-btn" onclick="filterChannels()">Search User</button>
     </div>
 
+    <div id="statusMessage">Loading channels...</div>
+    <div class="channels-grid" id="channelsGrid"></div>
+
     <script>
-        let fullChannelsData = [];
-        let liveTickerTimer = null;
-        let selectedChannel = null;
+        let masterChannelsList = [];
 
-        // Automatically load saved database from browser storage if page refreshes
-        if (localStorage.getItem("fysc_saved_database")) {
+        // CALLBACK CHANNEL: Safely captures live parameters directly from the lcedit hub
+        window.processLiveRegistry = function(payload) {
             try {
-                fullChannelsData = JSON.parse(localStorage.getItem("fysc_saved_database"));
-                fullChannelsData.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
-                refreshStatusBanner();
-            } catch(e) {}
-        }
-
-        function refreshStatusBanner() {
-            document.getElementById("mainStatusText").textContent = "Database active! Loaded " + fullChannelsData.length + " total channels.";
-        }
-
-        function processDatabaseSync() {
-            const pastedInput = document.getElementById("jsonPasteBox").value.trim();
-            if (!pastedInput) return alert("Please paste the data text block first!");
-
-            try {
-                const parsedJSON = JSON.parse(pastedInput);
-                const arrayPayload = parsedJSON.data || parsedJSON.channels || parsedJSON.counters || parsedJSON;
+                const incomingData = payload.data || payload.channels || payload.counters || [];
                 
-                if (Array.isArray(arrayPayload)) {
-                    fullChannelsData = arrayPayload;
-                    // Sort descending immediately to make ranks perfect
-                    fullChannelsData.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
-                    
-                    // Save into browser history cache
-                    localStorage.setItem("fysc_saved_database", JSON.stringify(fullChannelsData));
-                    refreshStatusBanner();
-                    
-                    alert("Leaderboard updated! " + fullChannelsData.length + " channels are now searchable.");
-                    document.getElementById("jsonPasteBox").value = "";
-                } else {
-                    alert("Invalid data structure. Make sure you copied the whole text wall.");
-                }
+                // Sort everything descending to render ranks correctly
+                incomingData.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
+                
+                masterChannelsList = incomingData;
+                document.getElementById("statusMessage").style.display = "none";
+                
+                renderGridHTML(masterChannelsList);
             } catch (err) {
-                alert("JSON Parse Error: Make sure you copied the text correctly.");
+                console.error("Error processing registry matrix:", err);
+                document.getElementById("statusMessage").textContent = "Error loading channels data.";
             }
+        };
+
+        function fetchLiveStreamData() {
+            const dynamicScript = document.createElement('script');
+            // Uses your exact save ID token mapped with the platform callback parameter
+            dynamicScript.src = 'https://lcedit.com' + Date.now();
+            
+            const existingScript = document.getElementById('lcedit-connection-bridge');
+            if (existingScript) existingScript.remove();
+            
+            dynamicScript.id = 'lcedit-connection-bridge';
+            document.body.appendChild(dynamicScript);
         }
 
-        function showLiveSuggestions() {
-            const inputVal = document.getElementById("usernameInput").value.trim().toLowerCase();
-            const suggestionsBox = document.getElementById("suggestionsBox");
-            
-            if (inputVal === "") {
-                suggestionsBox.innerHTML = "";
-                suggestionsBox.style.display = "none";
+        // Initialize connection immediately upon loading the webpage
+        fetchLiveStreamData();
+
+        // Silently loop-sync in the background every 10 seconds to catch newly typed !add chat commands
+        setInterval(fetchLiveStreamData, 10000);
+
+        function renderGridHTML(listToRender) {
+            const grid = document.getElementById("channelsGrid");
+            grid.innerHTML = "";
+
+            listToRender.forEach(user => {
+                // Find true leaderboard placement index across the master dataset
+                const trueRank = masterChannelsList.indexOf(user) + 1;
+                const currentCount = Math.floor(Number(user.count || 0));
+                const avatarImg = user.image || "https://placeholder.com";
+
+                const card = document.createElement("div");
+                card.className = "channel-card";
+                card.innerHTML = `
+                    <div class="rank-badge">#${trueRank}</div>
+                    <div class="card-header">
+                        <img class="avatar" src="${avatarImg}" alt="Avatar">
+                        <span class="channel-name">${user.name}</span>
+                    </div>
+                    <div class="sub-count-line">
+                        Subscribers:
+                        <span class="sub-number">${currentCount.toLocaleString()}</span>
+                    </div>
+                    <div class="card-actions">
+                        <button class="action-btn" onclick="alert('Viewing live count for ${user.name}')">Live Subcount</button>
+                        <a class="action-btn" href="https://youtube.com" target="_blank">Go to Channel</a>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function filterChannels() {
+            const query = document.getElementById("userInput").value.trim().toLowerCase();
+            if (query === "") {
+                renderGridHTML(masterChannelsList);
                 return;
             }
-
-            const matchingResults = fullChannelsData.filter(user => {
-                const channelName = (user.name || "").toString().toLowerCase();
-                return channelName.includes(inputVal);
-            }).slice(0, 6);
-
-            if (matchingResults.length === 0) {
-                suggestionsBox.innerHTML = "";
-                suggestionsBox.style.display = "none";
-                return;
-            }
-
-            suggestionsBox.innerHTML = "";
-            matchingResults.forEach(user => {
-                const divItem = document.createElement("div");
-                divItem.className = "suggestion-item";
-                divItem.innerHTML = `<span>${user.name}</span>`;
-                
-                divItem.onclick = function() {
-                    document.getElementById("usernameInput").value = user.name;
-                    suggestionsBox.innerHTML = "";
-                    suggestionsBox.style.display = "none";
-                    executeChannelSearch();
-                };
+            const filtered = masterChannelsList.filter(user => 
+                (user.name || "").toString().toLowerCase().includes(query)
+            );
+            renderGridHTML(filtered);
+        }
+    </script>
+</body>
+</html>
