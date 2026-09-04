@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FYSC Live Stream Lookup Dashboard</title>
-    <!-- We load the official Livecounts fonts and core scripts -->
+    <title>FYSC Season 1 Channels</title>
     <link rel="stylesheet" href="https://googleapis.com">
     <style>
         body {
@@ -102,26 +101,31 @@
         <button onclick="lookupUser()">Search</button>
         
         <div class="result-box" id="resultArea">
-            <p style="color: #666; margin: 0;">Results will appear here...</p>
+            <p style="color: #666; margin: 0;">Loading dashboard data...</p>
         </div>
     </div>
 
     <script>
-        // PASTE YOUR ENTIRE COPIED EXPORT JSON STRING FROM LCEDIT DIRECTLY BETWEEN THE TICK MARKS BEHIND THE EQUAL SIGN below:
-        const lceditDataString = ``; 
-
         let channelsList = [];
 
-        // Parse lcedit configuration safely
-        try {
-            if (lceditDataString.trim() !== "") {
-                const parsedData = JSON.parse(lceditDataString);
-                // Extract channels registry list array from lcedit JSON layout save
+        // This connects directly to your separate data.json file
+        async function loadData() {
+            const resultDiv = document.getElementById("resultArea");
+            try {
+                const response = await fetch('data.json');
+                const parsedData = await response.json();
+                
+                // Read from the lcedit structured array
                 channelsList = parsedData.data || parsedData.counters || [];
+                resultDiv.innerHTML = `<p style="color: #888; margin: 0;">Ready! Enter your channel name above.</p>`;
+            } catch (e) {
+                console.error("Failed to load data.json:", e);
+                resultDiv.innerHTML = `<p style="color: #ff4a4a; margin: 0;">Error: Could not link to data.json file.</p>`;
             }
-        } catch (e) {
-            console.error("Failed to load lcedit JSON string structure data:", e);
         }
+
+        // Run data sync immediately
+        loadData();
 
         function lookupUser() {
             const searchInput = document.getElementById("usernameInput").value.trim().toLowerCase();
@@ -133,24 +137,21 @@
             }
             
             if (channelsList.length === 0) {
-                resultDiv.innerHTML = "<p style='color: #ff4a4a;'>Registry is currently empty. Please add your lcedit JSON string data.</p>";
+                resultDiv.innerHTML = "<p style='color: #ff4a4a;'>Data is still loading or empty. Please wait a second.</p>";
                 return;
             }
 
-            // Find matching name in lcedit dataset profile keys
             const foundUser = channelsList.find(user => (user.name || "").trim().toLowerCase() === searchInput);
             
             if (foundUser) {
-                // Read original properties matching standard lcedit object mappings
-                const userRank = foundUser.rank || "Unranked";
                 const userSubs = Math.floor(foundUser.count || foundUser.lastCount || 0);
                 const userImage = foundUser.image || "https://ggpht.com";
 
                 resultDiv.innerHTML = `
                     <img class="avatar" src="${userImage}" alt="Avatar">
                     <div class="stat-line">Channel: <span class="highlight">${foundUser.name}</span></div>
-                    <div class="stat-line">Rank: <span class="highlight">#${userRank}</span></div>
                     <div class="stat-line">Subscribers: <span class="highlight">${userSubs.toLocaleString()}</span></div>
+                    <div class="stat-line" style="font-size:12px; color:#555; margin-top:8px;">Connected Live via lcedit</div>
                 `;
             } else {
                 resultDiv.innerHTML = `
