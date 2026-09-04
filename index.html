@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FYSC Season 1 Channels - Live Engine</title>
-    <link rel="stylesheet" href="https://googleapis.com">
     <style>
         body {
-            font-family: 'Roboto', 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Roboto, sans-serif;
             background-color: #121212;
             color: #ffffff;
             text-align: center;
@@ -77,9 +76,6 @@
             display: flex;
             align-items: center;
         }
-        .suggestion-item:last-child {
-            border-bottom: none;
-        }
         .suggestion-item:hover {
             background-color: #ff4a4a;
             color: white;
@@ -126,7 +122,6 @@
             color: #ff4a4a;
             font-weight: bold;
             font-size: 32px;
-            transition: color 0.15s ease-in-out;
         }
         .live-indicator {
             display: inline-block;
@@ -142,6 +137,26 @@
             50% { opacity: 1; }
             100% { opacity: 0.3; }
         }
+        .admin-panel {
+            margin-top: 40px;
+            padding: 15px;
+            background: #1a1a1a;
+            border-radius: 8px;
+            border: 1px dashed #444;
+        }
+        textarea {
+            width: 100%;
+            height: 70px;
+            background: #2a2a2a;
+            color: #fff;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 10px;
+            box-sizing: border-box;
+            font-family: monospace;
+            font-size: 11px;
+            resize: none;
+        }
     </style>
 </head>
 <body>
@@ -150,7 +165,7 @@
         <h1>FYSC Season 1</h1>
         <p class="subtitle">Search your channel name to check your standing live</p>
         
-        <!-- The form submission now blocks standard browser reload loops -->
+        <!-- form element with return false strictly blocks full page refreshes -->
         <form onsubmit="startLiveTracking(); return false;">
             <div class="search-wrapper">
                 <input type="text" id="usernameInput" placeholder="Enter Channel Name" autocomplete="off" oninput="handleInputDrawing()">
@@ -160,60 +175,65 @@
         </form>
         
         <div class="result-box" id="resultArea">
-            <p style="color: #888; margin: 0;" id="loadingText">Loading database data...</p>
+            <p style="color: #888; margin: 0;" id="statusMessage">Ready! Load your stream channel data below.</p>
+        </div>
+
+        <!-- MANUAL UPDATE BOX TO BYPASS NETWORK BLOCKS -->
+        <div class="admin-panel">
+            <p style="font-size: 12px; margin: 0 0 8px 0; color: #aaa;">Streamer tool: Paste data from lcedit link here to update all channels instantly</p>
+            <textarea id="jsonPasteInput" placeholder="Open your lcedit link in a new tab, copy everything, and paste it here..."></textarea>
+            <button type="button" style="background:#444; font-size:12px; padding:5px 12px;" onclick="syncDatabaseManual()">Load Channels List</button>
         </div>
     </div>
 
     <script>
-        let channelsList = [];
+        // Default starter channels so the page doesn't break if it is empty
+        let channelsList = [
+            { "name": "GianlucaStatsV2", "count": 224880 },
+            { "name": "MrDragonBeast", "count": 219689 },
+            { "name": "BenGaming", "count": 196409 },
+            { "name": "Dekyy722u", "count": 177622 },
+            { "name": "ai ShowSpeed", "count": 128895 },
+            { "name": "glm", "count": 21516 }
+        ];
+
         let liveUpdateTimer = null;
         let activeUser = null;
 
-        // FIXED BROWSER BYPASS: This function receives the data securely from lcedit
-        window.lceditCallback = function(parsedData) {
-            const loadingText = document.getElementById("loadingText");
+        // Automatically loads the data back up if you or a viewer refreshes the page
+        if (localStorage.getItem("fysc_saved_list")) {
             try {
-                // Read directly from the raw database container object properties
-                channelsList = parsedData.data || parsedData.channels || [];
-                
-                // Sort by count descending so ranks calculate perfectly
-                channelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
-
-                if (loadingText && loadingText.textContent.includes("Loading database data...")) {
-                    loadingText.style.color = "#888";
-                    loadingText.textContent = "Ready! Enter your channel name above.";
-                }
-                
-                // Keep background data fresh if a card is open when chat runs commands
-                if (activeUser) {
-                    const freshUser = channelsList.find(u => u.name.toLowerCase() === activeUser.name.toLowerCase());
-                    if (freshUser) {
-                        activeUser.count = freshUser.count;
-                        activeUser.min_gain = freshUser.min_gain;
-                        activeUser.max_gain = freshUser.max_gain;
-                    }
-                }
-            } catch (e) {
-                console.error("Failed parsing database objects:", e);
-            }
-        };
-
-        // Inject script file using direct browser callback triggers to bypass CORS blocks
-        function loadData() {
-            const script = document.createElement('script');
-            script.src = 'https://lcedit.com' + Date.now();
-            
-            const oldScript = document.getElementById('lcedit-bridge');
-            if (oldScript) oldScript.remove();
-            
-            script.id = 'lcedit-bridge';
-            document.body.appendChild(script);
+                channelsList = JSON.parse(localStorage.getItem("fysc_saved_list"));
+            } catch(e) {}
         }
 
-        loadData();
+        channelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
+        updateStatusDisplay();
 
-        // Refresh database quietly from the server every 8 seconds to parse !add increments instantly
-        setInterval(loadData, 8000);
+        function updateStatusDisplay() {
+            document.getElementById("statusMessage").textContent = "Ready! Tracking " + channelsList.length + " total stream channels.";
+        }
+
+        function syncDatabaseManual() {
+            const rawText = document.getElementById("jsonPasteInput").value.trim();
+            if (!rawText) return alert("Please paste the data text block first!");
+            try {
+                const parsed = JSON.parse(rawText);
+                const incoming = parsed.data || parsed.channels || parsed.counters || parsed;
+                if (Array.isArray(incoming)) {
+                    channelsList = incoming;
+                    channelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
+                    localStorage.setItem("fysc_saved_list", JSON.stringify(channelsList));
+                    updateStatusDisplay();
+                    alert("Sync successful! Loaded " + channelsList.length + " channels. Viewers can now search!");
+                    document.getElementById("jsonPasteInput").value = "";
+                } else {
+                    alert("Text format error. Make sure you copied everything from the link page.");
+                }
+            } catch (err) {
+                alert("Paste Error: Make sure you copied the text correctly.");
+            }
+        }
 
         function handleInputDrawing() {
             const inputVal = document.getElementById("usernameInput").value.trim().toLowerCase();
@@ -261,23 +281,3 @@
         });
 
         function startLiveTracking() {
-            document.getElementById("suggestionsBox").style.display = "none";
-            clearInterval(liveUpdateTimer);
-
-            const searchInput = document.getElementById("usernameInput").value.trim().toLowerCase();
-            const resultDiv = document.getElementById("resultArea");
-            
-            if (searchInput === "") {
-                resultDiv.innerHTML = "<p style='color: #ff4a4a; margin:0;'>Please enter a name to search.</p>";
-                return;
-            }
-            
-            if (channelsList.length === 0) {
-                resultDiv.innerHTML = "<p style='color: #ff4a4a; margin:0;'>Database is still loading. Please wait a second.</p>";
-                return;
-            }
-
-            activeUser = channelsList.find(user => {
-                const currentName = (user.name || "").toString().trim().toLowerCase();
-                return currentName === searchInput;
-            });
