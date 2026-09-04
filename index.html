@@ -144,7 +144,6 @@
         <h1>FYSC Season 1</h1>
         <p class="subtitle">Search your channel name to check your standing live</p>
         
-        <!-- The form submission now links straight to our tracking function -->
         <form onsubmit="startLiveTracking(); return false;">
             <div class="search-wrapper">
                 <input type="text" id="usernameInput" placeholder="Enter Channel Name" autocomplete="off" oninput="handleInputDrawing()">
@@ -154,29 +153,46 @@
         </form>
         
         <div class="result-box" id="resultArea">
-            <p style="color: #888; margin: 0;">Ready! Enter your channel name above.</p>
+            <p style="color: #888; margin: 0;" id="statusMessage">Loading database data...</p>
         </div>
     </div>
 
     <script>
-        // ==========================================
-        // YOUR CHANNELS DIRECTORY
-        // ==========================================
-        let channelsList = [
-            { "name": "GianlucaStatsV2", "count": 224880, "min_gain": 5, "max_gain": 15 },
-            { "name": "MrDragonBeast", "count": 219689, "min_gain": 4, "max_gain": 12 },
-            { "name": "BenGaming", "count": 196409, "min_gain": 3, "max_gain": 10 },
-            { "name": "Dekyy722u", "count": 177622, "min_gain": 2, "max_gain": 8 },
-            { "name": "ai ShowSpeed", "count": 128895, "min_gain": 1, "max_gain": 5 },
-            { "name": "glm", "count": 21516, "min_gain": 1, "max_gain": 4 },
-            { "name": "Oliwer maxi", "count": 29685, "min_gain": -2, "max_gain": 6 }
-        ];
-
+        let channelsList = [];
         let liveUpdateTimer = null;
         let activeUser = null;
 
-        // Sort automatically right away
-        channelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
+        // AUTOMATIC CALL FOR EVERY CHANNEL BROWSER INTERCEPT
+        window.lceditStreamCallback = function(payload) {
+            const msgText = document.getElementById("statusMessage");
+            try {
+                // Safely ingest channels list from lcedit's standard background format
+                channelsList = payload.data || payload.channels || [];
+                
+                // Sort everything perfectly by highest sub value to calculate dynamic standing ranks
+                channelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
+
+                if (msgText) {
+                    msgText.textContent = "Ready! Enter your channel name above.";
+                }
+            } catch (err) {
+                console.error("Format parsing block conflict:", err);
+                if (msgText) msgText.textContent = "Error parsing server data.";
+            }
+        };
+
+        function fetchLiveDatabase() {
+            // Dynamic script loading injects payload into browser sandbox bypassing CORS limits
+            const networkScript = document.createElement('script');
+            networkScript.src = 'https://lcedit.com' + Date.now();
+            document.body.appendChild(networkScript);
+        }
+
+        // Initialize connection
+        fetchLiveDatabase();
+
+        // Refresh entire database data from server every 10 seconds silently to capture stream !add loops
+        setInterval(fetchLiveDatabase, 10000);
 
         function handleInputDrawing() {
             const inputVal = document.getElementById("usernameInput").value.trim().toLowerCase();
@@ -224,7 +240,6 @@
         });
 
         function startLiveTracking() {
-            // Close autocomplete box safely
             document.getElementById("suggestionsBox").style.display = "none";
             clearInterval(liveUpdateTimer);
 
@@ -248,14 +263,13 @@
 
                 renderUserCard();
                 
-                liveUpdateTimer = setInterval(() => {
-                    executeLiveTick();
-                }, 2000); 
+                // Keep visually updating local screen ticker fluctuations smoothly
+                liveUpdateTimer = setInterval(executeLiveTick, 2000); 
 
             } else {
                 resultDiv.innerHTML = `
                     <p style="color: #ff4a4a; font-weight: bold; margin: 0 0 10px 0;">User not found!</p>
-                    <p style="font-size: 14px; color: #aaa; margin: 0;">Make sure the spelling matches your user database listing exactly.</p>
+                    <p style="font-size: 14px; color: #aaa; margin: 0;">Make sure spelling matches your live chat command registry exactly.</p>
                 `;
             }
         }
@@ -264,13 +278,5 @@
             const resultDiv = document.getElementById("resultArea");
             const displayCount = Math.floor(activeUser.currentRunningCount);
             
+            // Computes mathematically exact placement row across ALL registered users
             const index = channelsList.indexOf(activeUser);
-            const userRank = index !== -1 ? index + 1 : "Tracking";
-            
-            const userImage = "https://placeholder.com";
-
-            resultDiv.innerHTML = `
-                <img class="avatar" src="${userImage}" alt="Avatar">
-                <div class="stat-line">Channel: <span style="font-weight:bold; color:white;">${activeUser.name}</span></div>
-                <div class="stat-line">Rank: <span class="highlight">#${userRank}</span></div>
-                <div class="stat-line">Subscribers: <span class="highlight" id="liveCounter">${displayCount.toLocaleString()}</span></div>
