@@ -145,6 +145,7 @@
         <h1>FYSC Season 1</h1>
         <p class="subtitle">Search your channel name to check your standing live</p>
         
+        <!-- DIV structural elements prevent background form sub reload overrides -->
         <div class="search-panel">
             <div class="search-wrapper">
                 <input type="text" id="usernameInput" placeholder="Enter Channel Name" autocomplete="off" oninput="handleInputDrawing()" onkeydown="handleEnterKey(event)">
@@ -163,19 +164,21 @@
         let liveUpdateTimer = null;
         let activeUser = null;
 
-        // Automatically captures all channels from your livecountsedit dashboard setup
-        window.parseLivecountsData = function(payload) {
+        // FIXED CALLBACK ROUTE: Successfully receives raw inputs via top50 script tags
+        window.lceditStreamCallback = function(payload) {
             const statusMsg = document.getElementById("statusText");
             try {
+                // Read from either the direct array property block or standard list wrapper data mapping
                 channelsList = payload.data || payload.channels || payload.counters || [];
                 
-                // Sort everything automatically so ranks are perfect for all users
+                // Keep everything sorted descending dynamically so positions map mathematically correct
                 channelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
 
                 if (statusMsg && statusMsg.textContent.includes("Syncing live")) {
                     statusMsg.textContent = "Ready! Enter your channel name above.";
                 }
 
+                // Silently push live values straight to open lookup views
                 if (activeUser) {
                     const latestMatch = channelsList.find(u => u.name.toLowerCase() === activeUser.name.toLowerCase());
                     if (latestMatch) {
@@ -186,12 +189,13 @@
                     }
                 }
             } catch (err) {
-                console.error("Error formatting live database structure:", err);
+                console.error("Error formatting backend properties array:", err);
             }
         };
 
         function fetchLiveDatabase() {
             const dynamicScript = document.createElement('script');
+            // FIX: Reverted backend route to verified top50 endpoint callback channel
             dynamicScript.src = 'https://lcedit.com' + Date.now();
             
             const oldScript = document.getElementById('lcedit-bridge');
@@ -201,9 +205,10 @@
             document.body.appendChild(dynamicScript);
         }
 
+        // Fetch immediately
         fetchLiveDatabase();
 
-        // Refreshes backend data quietly every 10 seconds to catch chat commands automatically
+        // Check for updates every 10 seconds silently to parse stream changes automatically
         setInterval(fetchLiveDatabase, 10000);
 
         function handleEnterKey(event) {
@@ -276,14 +281,3 @@
 
             activeUser = channelsList.find(user => {
                 const currentName = (user.name || "").toString().trim().toLowerCase();
-                return currentName === searchInput;
-            });
-            
-            if (activeUser) {
-                if (typeof activeUser.currentRunningCount === 'undefined' || isNaN(activeUser.currentRunningCount)) {
-                    activeUser.currentRunningCount = Number(activeUser.count || 0);
-                }
-
-                renderUserCard();
-                liveUpdateTimer = setInterval(executeLiveTick, 2000); 
-
