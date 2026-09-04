@@ -122,7 +122,7 @@
     </div>
 
     <script>
-        // Your exact livecountsedit dashboard cloud link
+        // Your exact livecountsedit stream ID
         const streamId = "81969dc3-7249-47f7-8554-8d0bb8c33800"; 
 
         let globalLiveTimer = null;
@@ -145,10 +145,10 @@
 
             resultDiv.innerHTML = "<p>Connecting to lcedit cloud registry stream...</p>";
 
-            // Fetch live data instantly on execution
+            // Fetch live data instantly on search execution
             fetchLiveCloudData(searchInput);
 
-            // Keeps tracking data endpoints from lcedit every 2 seconds automatically
+            // Keeps checking for updates every 2 seconds automatically
             globalLiveTimer = setInterval(() => {
                 fetchLiveCloudData(searchInput);
             }, 2000);
@@ -157,9 +157,9 @@
         async function fetchLiveCloudData(username) {
             const resultDiv = document.getElementById("resultArea");
             try {
-                // FIXED INTERFACE ROUTING: Added 'https://corsproxy.io?' to bypass browser safety blocks
+                // FIXED THE DATA LOAD: Added corsproxy.io to bypass browser block rules
                 const targetUrl = `https://lcedit.com{streamId}/?t=${Date.now()}`;
-                const response = await fetch(`https://corsproxy.io?${encodeURIComponent(targetUrl)}`);
+                const response = await fetch(`https://corsproxy.io{encodeURIComponent(targetUrl)}`);
                 const parsedData = await response.json();
                 
                 const channelsList = parsedData.data || parsedData.counters || [];
@@ -188,7 +188,7 @@
                 }
             } catch (e) {
                 console.error("Failed to connect live to lcedit stream API:", e);
-                resultDiv.innerHTML = `<p style="color: #ff4a4a; margin: 0;">Error: Connection blocked. Trying to reconnect...</p>`;
+                resultDiv.innerHTML = `<p style="color: #ff4a4a; margin: 0;">Error connecting to lcedit. Retrying...</p>`;
             }
         }
     </script>
