@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FYSC Season 1 Channels - Realtime Sync</title>
+    <title>FYSC Season 1 Channels - Live Engine</title>
     <link rel="stylesheet" href="https://googleapis.com">
     <style>
         body {
@@ -87,6 +87,7 @@
             color: #ff4a4a;
             font-weight: bold;
             font-size: 32px;
+            transition: color 0.15s ease-in-out;
         }
         .live-indicator {
             display: inline-block;
@@ -117,22 +118,30 @@
         </form>
         
         <div class="result-box" id="resultArea">
-            <p style="color: #666; margin: 0;">Ready! Enter your channel name above.</p>
+            <p style="color: #666; margin: 0;">Loading database data...</p>
         </div>
     </div>
 
     <script>
-        // Your exact livecountsedit dashboard cloud link ID
-        const streamId = "81969dc3-7249-47f7-8554-8d0bb8c33800"; 
+        let channelsList = [];
+        let liveUpdateTimer = null;
+        let activeUser = null;
 
-        let globalLiveTimer = null;
-        let proxyIndex = 0;
+        // Load baseline data from your local file safely to avoid external block rules
+        async function loadData() {
+            const resultDiv = document.getElementById("resultArea");
+            try {
+                const response = await fetch('data.json?t=' + Date.now());
+                const parsedData = await response.json();
+                channelsList = parsedData.data || parsedData.counters || [];
+                resultDiv.innerHTML = `<p style="color: #888; margin: 0;">Ready! Enter your channel name above.</p>`;
+            } catch (e) {
+                console.error("Failed to load local data configuration:", e);
+                resultDiv.innerHTML = `<p style="color: #ff4a4a; margin: 0;">Error loading database. Please check your data.json file.</p>`;
+            }
+        }
 
-        // A rotating list of secure CORS proxy streams to bypass server load limitations
-        const proxies = [
-            (url) => `https://corsproxy.io{encodeURIComponent(url)}`,
-            (url) => `https://allorigins.win{encodeURIComponent(url)}`
-        ];
+        loadData();
 
         function handleFormSubmit(event) {
             event.preventDefault();
@@ -140,7 +149,7 @@
         }
 
         function startLiveTracking() {
-            clearInterval(globalLiveTimer);
+            clearInterval(liveUpdateTimer);
 
             const searchInput = document.getElementById("usernameInput").value.trim().toLowerCase();
             const resultDiv = document.getElementById("resultArea");
@@ -149,72 +158,91 @@
                 resultDiv.innerHTML = "<p style='color: #ff4a4a;'>Please enter a name to search.</p>";
                 return;
             }
+            
+            if (channelsList.length === 0) {
+                resultDiv.innerHTML = "<p style='color: #ff4a4a;'>Database is still loading. Please wait a second.</p>";
+                return;
+            }
 
-            resultDiv.innerHTML = "<p>Connecting to lcedit cloud registry stream...</p>";
+            activeUser = channelsList.find(user => {
+                const currentName = (user.name || "").toString().trim().toLowerCase();
+                return currentName === searchInput;
+            });
+            
+            if (activeUser) {
+                // Initialize the counter variable if it isn't set yet
+                if (typeof activeUser.currentRunningCount === 'undefined') {
+                    activeUser.currentRunningCount = Number(activeUser.count || activeUser.lastCount || 0);
+                }
 
-            // Fetch live data instantly on search execution
-            fetchLiveCloudData(searchInput);
+                renderUserCard();
+                
+                // Read the speed setting straight from your dashboard setup
+                const updateRateMs = Number(channelsList.updateInterval) || 2000;
 
-            // Keep pulling the data live every 2 seconds
-            globalLiveTimer = setInterval(() => {
-                fetchLiveCloudData(searchInput);
-            }, 2000);
+                // LOCAL ODOMETER LOOP: Calculates fluctuations in real-time
+                liveUpdateTimer = setInterval(() => {
+                    executeLiveTick();
+                }, updateRateMs); 
+
+            } else {
+                resultDiv.innerHTML = `
+                    <p style="color: #ff4a4a; font-weight: bold; margin: 0 0 10px 0;">User not found!</p>
+                    <p style="font-size: 14px; color: #aaa; margin: 0;">Make sure the spelling matches your stream registry layout exactly.</p>
+                `;
+            }
         }
 
-        async function fetchLiveCloudData(username) {
+        function renderUserCard() {
             const resultDiv = document.getElementById("resultArea");
-            const targetUrl = `https://lcedit.com{streamId}/?t=${Date.now()}`;
+            const displayCount = Math.floor(activeUser.currentRunningCount);
             
-            // Build the current target URL utilizing our running rotating proxy stack
-            const proxiedUrl = proxies[proxyIndex](targetUrl);
+            let userRank = activeUser.rank;
+            if (!userRank) {
+                const index = channelsList.indexOf(activeUser);
+                userRank = index !== -1 ? index + 1 : "Tracking";
+            }
+            
+            const userImage = activeUser.image || "https://ggpht.com";
 
-            try {
-                const response = await fetch(proxiedUrl);
-                let rawData = await response.json();
+            resultDiv.innerHTML = `
+                <img class="avatar" src="${userImage}" alt="Avatar">
+                <div class="stat-line">Channel: <span style="font-weight:bold; color:white;">${activeUser.name}</span></div>
+                <div class="stat-line">Rank: <span class="highlight">#${userRank}</span></div>
+                <div class="stat-line">Subscribers: <span class="highlight" id="liveCounter">${displayCount.toLocaleString()}</span></div>
+                <div class="stat-line" style="font-size:12px; color:#148c50; margin-top:8px; display:flex; align-items:center; justify-content:center;">
+                    <span class="live-indicator"></span> Live Tracker Connected
+                </div>
+            `;
+        }
+
+        function executeLiveTick() {
+            if (!activeUser) return;
+
+            // Extract the algorithmic gain metrics from your data file
+            const minGain = typeof activeUser.min_gain !== 'undefined' ? Number(activeUser.min_gain) : -3;
+            const maxGain = typeof activeUser.max_gain !== 'undefined' ? Number(activeUser.max_gain) : 5;
+            
+            // Random fluctuation based on your exact layout rate settings
+            const change = Math.floor(Math.random() * (maxGain - minGain + 1)) + minGain;
+            
+            activeUser.currentRunningCount += change;
+
+            const counterElement = document.getElementById("liveCounter");
+            if (counterElement) {
+                counterElement.innerText = Math.floor(activeUser.currentRunningCount).toLocaleString();
                 
-                // Normalizes the response schema differences across different proxies (AllOrigins wraps its data)
-                let parsedData = rawData;
-                if (rawData.contents && typeof rawData.contents === 'string') {
-                    parsedData = JSON.parse(rawData.contents);
+                // Color updates flash matching positive/negative gains
+                if (change > 0) {
+                    counterElement.style.color = "#148c50"; // Green for plus
+                } else if (change < 0) {
+                    counterElement.style.color = "#b43c3c"; // Red for minus
                 }
-
-                const channelsList = parsedData.data || parsedData.counters || [];
                 
-                const foundUser = channelsList.find(user => {
-                    const currentName = (user.name || "").toString().trim().toLowerCase();
-                    return currentName === username;
-                });
-                
-                if (foundUser) {
-                    const userSubs = Math.floor(foundUser.count || foundUser.lastCount || 0);
-                    
-                    let userRank = foundUser.rank;
-                    if (!userRank) {
-                        const index = channelsList.indexOf(foundUser);
-                        userRank = index !== -1 ? index + 1 : "Tracking";
-                    }
-                    
-                    const userImage = foundUser.image || "https://ggpht.com";
-
-                    resultDiv.innerHTML = `
-                        <img class="avatar" src="${userImage}" alt="Avatar">
-                        <div class="stat-line">Channel: <span style="font-weight:bold; color:white;">${foundUser.name}</span></div>
-                        <div class="stat-line">Rank: <span class="highlight">#${userRank}</span></div>
-                        <div class="stat-line">Subscribers: <span class="highlight">${userSubs.toLocaleString()}</span></div>
-                        <div class="stat-line" style="font-size:12px; color:#148c50; margin-top:8px; display:flex; align-items:center; justify-content:center;">
-                            <span class="live-indicator"></span> Synced 1:1 with lcedit Dashboard
-                        </div>
-                    `;
-                } else {
-                    resultDiv.innerHTML = `
-                        <p style="color: #ff4a4a; font-weight: bold; margin: 0 0 10px 0;">User not found!</p>
-                        <p style="font-size: 14px; color: #aaa; margin: 0;">Make sure they have joined via stream command registry.</p>
-                    `;
-                }
-            } catch (e) {
-                console.warn("Proxy connection timed out or dropped. Cycling proxy network endpoints...", e);
-                // Automatically cycle to the next backup proxy in the list on failure
-                proxyIndex = (proxyIndex + 1) % proxies.length;
+                // Smoothly switch colors back to primary layout red
+                setTimeout(() => {
+                    counterElement.style.color = "#ff4a4a";
+                }, 300);
             }
         }
     </script>
