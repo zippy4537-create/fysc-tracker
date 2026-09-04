@@ -174,17 +174,16 @@
     <h1>All FYSC Season 1 Channels</h1>
 
     <div class="search-container">
-        <!-- Form submission prevent default statement handles search queries instantly -->
         <form onsubmit="filterChannels(); return false;" style="display: flex; gap: 10px;">
             <input type="text" id="userInput" placeholder="Search user..." oninput="filterChannels()">
             <button type="submit" class="search-btn">Search User</button>
         </form>
     </div>
 
+    <!-- ULTIMATE FALLBACK: Forcing the text node string value parameter directly inside the container layout element -->
     <div id="statusMessage" style="font-size: 16px; color: #aaaaaa; margin-top: 20px;">Ready! Paste your lcedit text data into the tool below to generate the cards dashboard.</div>
     <div class="channels-grid" id="channelsGrid"></div>
 
-    <!-- OFFLINE DATA SYNCING INTERFACE PANEL -->
     <div class="admin-panel">
         <p style="font-size: 13px; margin: 0 0 10px 0; color: #aaa;">Streamer tool: Paste data from your lcedit link here to refresh all layout cards instantly</p>
         <textarea id="jsonPasteInput" placeholder="Open your lcedit link in a new tab, copy everything, and paste it here..."></textarea>
@@ -194,14 +193,17 @@
     <script>
         let masterChannelsList = [];
 
-        // Instantly check local memory to avoid sticking on any loading filters
-        if (localStorage.getItem("fysc_clean_grid")) {
+        // Check the local memory database storage block to draw elements immediately
+        if (localStorage.getItem("fysc_clean_grid_v5")) {
             try {
-                masterChannelsList = JSON.parse(localStorage.getItem("fysc_clean_grid"));
+                masterChannelsList = JSON.parse(localStorage.getItem("fysc_clean_grid_v5"));
                 masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
                 document.getElementById("statusMessage").style.display = "none";
                 renderGridHTML(masterChannelsList);
             } catch(e) { console.error(e); }
+        } else {
+            // Absolute forced break: Clear the loading block text even if storage is blank
+            document.getElementById("statusMessage").textContent = "Ready! Paste your lcedit data block string down below.";
         }
 
         function syncDatabaseManual() {
@@ -214,8 +216,8 @@
                     masterChannelsList = incoming;
                     masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
                     
-                    // Distinct storage key prevents interference from past broken attempts
-                    localStorage.setItem("fysc_clean_grid", JSON.stringify(masterChannelsList));
+                    // Distinct version key (v5) completely maps past cache blocks
+                    localStorage.setItem("fysc_clean_grid_v5", JSON.stringify(masterChannelsList));
                     
                     document.getElementById("statusMessage").style.display = "none";
                     renderGridHTML(masterChannelsList);
@@ -266,10 +268,3 @@
                 return;
             }
             const filtered = masterChannelsList.filter(user => 
-                (user.name || "").toString().toLowerCase().includes(query)
-            );
-            renderGridHTML(filtered);
-        }
-    </script>
-</body>
-</html>
