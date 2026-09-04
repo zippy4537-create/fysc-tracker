@@ -122,10 +122,17 @@
     </div>
 
     <script>
-        // Your active livecountsedit dashboard link ID
+        // Your exact livecountsedit dashboard cloud link ID
         const streamId = "81969dc3-7249-47f7-8554-8d0bb8c33800"; 
 
         let globalLiveTimer = null;
+        let proxyIndex = 0;
+
+        // A rotating list of secure CORS proxy streams to bypass server load limitations
+        const proxies = [
+            (url) => `https://corsproxy.io{encodeURIComponent(url)}`,
+            (url) => `https://allorigins.win{encodeURIComponent(url)}`
+        ];
 
         function handleFormSubmit(event) {
             event.preventDefault();
@@ -148,7 +155,7 @@
             // Fetch live data instantly on search execution
             fetchLiveCloudData(searchInput);
 
-            // Keeps tracking data endpoints from lcedit every 2 seconds automatically
+            // Keep pulling the data live every 2 seconds
             globalLiveTimer = setInterval(() => {
                 fetchLiveCloudData(searchInput);
             }, 2000);
@@ -156,14 +163,23 @@
 
         async function fetchLiveCloudData(username) {
             const resultDiv = document.getElementById("resultArea");
+            const targetUrl = `https://lcedit.com{streamId}/?t=${Date.now()}`;
+            
+            // Build the current target URL utilizing our running rotating proxy stack
+            const proxiedUrl = proxies[proxyIndex](targetUrl);
+
             try {
-                const targetUrl = `https://lcedit.com{streamId}/?t=${Date.now()}`;
-                const response = await fetch(`https://corsproxy.io{encodeURIComponent(targetUrl)}`);
-                const parsedData = await response.json();
+                const response = await fetch(proxiedUrl);
+                let rawData = await response.json();
                 
+                // Normalizes the response schema differences across different proxies (AllOrigins wraps its data)
+                let parsedData = rawData;
+                if (rawData.contents && typeof rawData.contents === 'string') {
+                    parsedData = JSON.parse(rawData.contents);
+                }
+
                 const channelsList = parsedData.data || parsedData.counters || [];
                 
-                // FIXED CASING: Converts both the searched text and lcedit data to lowercase to match correctly
                 const foundUser = channelsList.find(user => {
                     const currentName = (user.name || "").toString().trim().toLowerCase();
                     return currentName === username;
@@ -172,7 +188,6 @@
                 if (foundUser) {
                     const userSubs = Math.floor(foundUser.count || foundUser.lastCount || 0);
                     
-                    // Pull user index ranking layout properties safely
                     let userRank = foundUser.rank;
                     if (!userRank) {
                         const index = channelsList.indexOf(foundUser);
@@ -197,8 +212,11 @@
                     `;
                 }
             } catch (e) {
-                console.error("Failed to connect live to lcedit stream API:", e);
+                console.warn("Proxy connection timed out or dropped. Cycling proxy network endpoints...", e);
+                // Automatically cycle to the next backup proxy in the list on failure
+                proxyIndex = (proxyIndex + 1) % proxies.length;
             }
         }
     </script>
 </body>
+</html>
