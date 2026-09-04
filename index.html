@@ -140,7 +140,6 @@
     <h1>All FYSC Season 1 Channels</h1>
 
     <div class="search-container">
-        <!-- Built-in input loop blocks full page resets -->
         <form onsubmit="filterChannels(); return false;" style="display: flex; gap: 10px;">
             <input type="text" id="userInput" placeholder="Search user..." oninput="filterChannels()">
             <button type="submit" class="search-btn">Search User</button>
@@ -153,31 +152,37 @@
     <script>
         let masterChannelsList = [];
 
-        // THE ABSOLUTE REPAIR FIX: Correctly maps to lcedit's internal .counters layout format
-        window.lceditCallback = function(payload) {
+        // THE RUNTIME ENGINE TRIGGER: Securely receives the data from the unblocked script wrapper
+        window.processProxyPayload = function(responseContainer) {
             const statusMessage = document.getElementById("statusMessage");
             try {
-                // INGESTION TRICK: Grabs data from .counters or .data to read every single slot
-                const incomingData = payload.counters || payload.data || payload.channels || [];
+                // AllOrigins returns the raw website data inside .contents as a clean string block
+                const parsedData = JSON.parse(responseContainer.contents);
+                
+                // Extract from .counters (or backup fields) to get all people registered by commands
+                const incomingData = parsedData.counters || parsedData.data || parsedData.channels || [];
                 
                 if (incomingData.length > 0) {
                     masterChannelsList = incomingData;
                     
-                    // Sort descending automatically so rank values match perfectly
+                    // Force descending order sorting for absolute rank accuracy
                     masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
                     
                     if (statusMessage) statusMessage.style.display = "none";
                     renderGridHTML(masterChannelsList);
                 }
             } catch (err) {
-                console.error("Format processing conflict:", err);
+                console.error("Format compilation challenge:", err);
             }
         };
 
         function fetchLiveStreamData() {
+            // Target your exact live save configuration file link
+            const targetUrl = 'https://lcedit.com';
+            
+            // Replaces basic network fetches with a dynamic script tag wrapper that forces proxy conversion
             const dynamicScript = document.createElement('script');
-            // Connects through lcedit's open API channel template to pull data instantly
-            dynamicScript.src = 'https://lcedit.com' + Date.now();
+            dynamicScript.src = 'https://allorigins.win' + encodeURIComponent(targetUrl) + '&callback=processProxyPayload&t=' + Date.now();
             
             const existingScript = document.getElementById('lcedit-automation-bridge');
             if (existingScript) existingScript.remove();
@@ -186,10 +191,10 @@
             document.body.appendChild(dynamicScript);
         }
 
-        // Fetch everything immediately upon launching the site
+        // Initialize connection instantly on launch
         fetchLiveStreamData();
 
-        // Silent automatic check runs in the background every 8 seconds to update !add chat commands
+        // Automatically silent-syncs in the background every 8 seconds to parse !add increments instantly
         setInterval(fetchLiveStreamData, 8000);
 
         function renderGridHTML(listToRender) {
@@ -197,7 +202,6 @@
             grid.innerHTML = "";
 
             listToRender.forEach(user => {
-                // Find true leaderboard placement index across the master dataset
                 const trueRank = masterChannelsList.indexOf(user) + 1;
                 const currentCount = Math.floor(Number(user.count || 0));
                 const avatarImg = user.image || "https://placeholder.com";
