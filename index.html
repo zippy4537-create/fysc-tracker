@@ -133,6 +133,45 @@
             color: #aaaaaa;
             margin-top: 20px;
         }
+        .admin-panel {
+            margin-top: 60px;
+            padding: 20px;
+            background-color: #1a1a1a;
+            border-radius: 8px;
+            border: 1px dashed #444;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        textarea {
+            width: 100%;
+            height: 80px;
+            background-color: #2b2b2b;
+            color: #ffffff;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 10px;
+            box-sizing: border-box;
+            font-family: monospace;
+            font-size: 12px;
+            resize: none;
+            outline: none;
+            margin-bottom: 10px;
+        }
+        .sync-btn {
+            background-color: #1a242d;
+            border: 1px solid #3ca4a6;
+            color: #3ca4a6;
+            padding: 8px 20px;
+            font-size: 13px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .sync-btn:hover {
+            background-color: #3ca4a6;
+            color: #1a242d;
+        }
     </style>
 </head>
 <body>
@@ -140,40 +179,61 @@
     <h1>All FYSC Season 1 Channels</h1>
 
     <div class="search-container">
-        <input type="text" id="userInput" placeholder="Search user..." oninput="filterChannels()">
-        <button class="search-btn" onclick="filterChannels()">Search User</button>
+        <!-- Pure browser wrapper blocks page-refresh wipes completely -->
+        <form onsubmit="filterChannels(); return false;" style="display: flex; gap: 10px;">
+            <input type="text" id="userInput" placeholder="Search user..." oninput="filterChannels()">
+            <button type="submit" class="search-btn">Search User</button>
+        </form>
     </div>
 
-    <div id="statusMessage">Connecting directly to stream registry...</div>
+    <div id="statusMessage">Ready! Paste your lcedit text data into the tool below to show your grid.</div>
     <div class="channels-grid" id="channelsGrid"></div>
+
+    <!-- OFFLINE DATA SYNCING INTERFACE PANEL -->
+    <div class="admin-panel">
+        <p style="font-size: 13px; margin: 0 0 10px 0; color: #aaa;">Streamer tool: Paste data from your lcedit link here to refresh all layout cards instantly</p>
+        <textarea id="jsonPasteInput" placeholder="Open your lcedit link in a new tab, copy everything, and paste it here..."></textarea>
+        <button type="button" class="sync-btn" onclick="syncDatabaseManual()">Sync Channels Grid</button>
+    </div>
 
     <script>
         let masterChannelsList = [];
 
-        async function fetchLiveStreamData() {
-            const statusMessage = document.getElementById("statusMessage");
+        // Ingests cache parameters out of browser memory instantly if refreshing tabs
+        if (localStorage.getItem("fysc_cached_grid")) {
             try {
-                // Connects directly to your own private proxy pipeline on the site root path
-                const response = await fetch('/api/proxy?t=' + Date.now());
-                if (!response.ok) throw new Error();
-                
-                const parsedData = await response.json();
-                masterChannelsList = parsedData.data || parsedData.channels || [];
-                
+                masterChannelsList = JSON.parse(localStorage.getItem("fysc_cached_grid"));
                 masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
-                
-                if (statusMessage) statusMessage.style.display = "none";
+                document.getElementById("statusMessage").style.display = "none";
                 renderGridHTML(masterChannelsList);
-            } catch (err) {
-                console.error("Local data sync error:", err);
-                if (statusMessage && masterChannelsList.length === 0) {
-                    statusMessage.textContent = "Re-establishing connection pipeline...";
-                }
-            }
+            } catch(e) { console.error(e); }
         }
 
-        fetchLiveStreamData();
-        setInterval(fetchLiveStreamData, 10000);
+        // Manual upload logic processes the text wall instantly without loading freezes
+        function syncDatabaseManual() {
+            const rawText = document.getElementById("jsonPasteInput").value.trim();
+            if (!rawText) return alert("Please paste the data text block first!");
+            try {
+                const parsed = JSON.parse(rawText);
+                const incoming = parsed.data || parsed.channels || parsed.counters || parsed;
+                if (Array.isArray(incoming)) {
+                    masterChannelsList = incoming;
+                    masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
+                    
+                    // Remembers data rows so your stream layout stays alive upon page refreshes
+                    localStorage.setItem("fysc_cached_grid", JSON.stringify(masterChannelsList));
+                    
+                    document.getElementById("statusMessage").style.display = "none";
+                    renderGridHTML(masterChannelsList);
+                    alert("Grid updated successfully! Loaded total entries: " + masterChannelsList.length);
+                    document.getElementById("jsonPasteInput").value = "";
+                } else {
+                    alert("Data format error. Make sure you highlighted and copied everything from the link.");
+                }
+            } catch (err) {
+                alert("Text read error: Check if text was copied completely.");
+            }
+        }
 
         function renderGridHTML(listToRender) {
             const grid = document.getElementById("channelsGrid");
@@ -214,8 +274,3 @@
             const filtered = masterChannelsList.filter(user => 
                 (user.name || "").toString().toLowerCase().includes(query)
             );
-            renderGridHTML(filtered);
-        }
-    </script>
-</body>
-</html>
