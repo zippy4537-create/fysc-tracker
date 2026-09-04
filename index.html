@@ -179,37 +179,36 @@
     <h1>All FYSC Season 1 Channels</h1>
 
     <div class="search-container">
-        <!-- Pure browser wrapper blocks page-refresh wipes completely -->
+        <!-- Prevent form browser resets entirely -->
         <form onsubmit="filterChannels(); return false;" style="display: flex; gap: 10px;">
             <input type="text" id="userInput" placeholder="Search user..." oninput="filterChannels()">
             <button type="submit" class="search-btn">Search User</button>
         </form>
     </div>
 
-    <div id="statusMessage">Ready! Paste your lcedit text data into the tool below to show your grid.</div>
+    <div id="statusMessage">Ready! Paste your lcedit text block below to generate the cards dashboard.</div>
     <div class="channels-grid" id="channelsGrid"></div>
 
-    <!-- OFFLINE DATA SYNCING INTERFACE PANEL -->
+    <!-- OFFLINE DATA DATASTREAM UPDATE PANEL -->
     <div class="admin-panel">
-        <p style="font-size: 13px; margin: 0 0 10px 0; color: #aaa;">Streamer tool: Paste data from your lcedit link here to refresh all layout cards instantly</p>
-        <textarea id="jsonPasteInput" placeholder="Open your lcedit link in a new tab, copy everything, and paste it here..."></textarea>
+        <p style="font-size: 13px; margin: 0 0 10px 0; color: #aaa;">Streamer Tool: Paste your lcedit JSON text down below to update cards</p>
+        <textarea id="jsonPasteInput" placeholder='Paste code data string here (e.g. {"data": [...]})'></textarea>
         <button type="button" class="sync-btn" onclick="syncDatabaseManual()">Sync Channels Grid</button>
     </div>
 
     <script>
         let masterChannelsList = [];
 
-        // Ingests cache parameters out of browser memory instantly if refreshing tabs
-        if (localStorage.getItem("fysc_cached_grid")) {
+        // Ingest previous setups from storage instantly to skip loading screens entirely
+        if (localStorage.getItem("fysc_cached_grid_v2")) {
             try {
-                masterChannelsList = JSON.parse(localStorage.getItem("fysc_cached_grid"));
+                masterChannelsList = JSON.parse(localStorage.getItem("fysc_cached_grid_v2"));
                 masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
                 document.getElementById("statusMessage").style.display = "none";
                 renderGridHTML(masterChannelsList);
             } catch(e) { console.error(e); }
         }
 
-        // Manual upload logic processes the text wall instantly without loading freezes
         function syncDatabaseManual() {
             const rawText = document.getElementById("jsonPasteInput").value.trim();
             if (!rawText) return alert("Please paste the data text block first!");
@@ -220,18 +219,18 @@
                     masterChannelsList = incoming;
                     masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
                     
-                    // Remembers data rows so your stream layout stays alive upon page refreshes
-                    localStorage.setItem("fysc_cached_grid", JSON.stringify(masterChannelsList));
+                    // Save to deep cache key v2 to completely bypass old browser locks
+                    localStorage.setItem("fysc_cached_grid_v2", JSON.stringify(masterChannelsList));
                     
                     document.getElementById("statusMessage").style.display = "none";
                     renderGridHTML(masterChannelsList);
-                    alert("Grid updated successfully! Loaded total entries: " + masterChannelsList.length);
+                    alert("Grid synced! Successfully loaded total entries: " + masterChannelsList.length);
                     document.getElementById("jsonPasteInput").value = "";
                 } else {
-                    alert("Data format error. Make sure you highlighted and copied everything from the link.");
+                    alert("Invalid text string layout. Make sure you highlight and copy everything.");
                 }
             } catch (err) {
-                alert("Text read error: Check if text was copied completely.");
+                alert("Parsing failed: Check if code string copied completely.");
             }
         }
 
@@ -274,3 +273,8 @@
             const filtered = masterChannelsList.filter(user => 
                 (user.name || "").toString().toLowerCase().includes(query)
             );
+            renderGridHTML(filtered);
+        }
+    </script>
+</body>
+</html>
