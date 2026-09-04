@@ -145,7 +145,6 @@
         <h1>FYSC Season 1</h1>
         <p class="subtitle">Search your channel name to check your standing live</p>
         
-        <!-- REMOVED FORM TAG WRAPPER: This blocks automatic full-page refreshes permanently -->
         <div class="search-panel">
             <div class="search-wrapper">
                 <input type="text" id="usernameInput" placeholder="Enter Channel Name" autocomplete="off" oninput="handleInputDrawing()" onkeydown="handleEnterKeyTrigger(event)">
@@ -155,7 +154,7 @@
         </div>
         
         <div class="result-box" id="resultArea">
-            <p style="color: #888; margin: 0;" id="statusMessage">Loading database data...</p>
+            <p style="color: #888; margin: 0;" id="statusMessage">Connecting to stream registry...</p>
         </div>
     </div>
 
@@ -164,36 +163,35 @@
         let liveUpdateTimer = null;
         let activeUser = null;
 
-        // Bypasses browser security rules using a dedicated callback script channel
-        window.lceditStreamCallback = function(payload) {
+        // Bypasses browser security locks using a secure public runtime image bridge
+        async function fetchLiveDatabase() {
             const msgText = document.getElementById("statusMessage");
             try {
-                // Ingest raw data from livecountsedit save payload structure
-                channelsList = payload.data || payload.channels || [];
+                const targetUrl = 'https://lcedit.com';
                 
-                // Keep values ordered accurately to calculate standings ranks
+                // Uses a fallback proxy to strip out conflicting CORS protection flags smoothly
+                const response = await fetch('https://allorigins.win' + encodeURIComponent(targetUrl) + '&t=' + Date.now());
+                const proxyData = await response.json();
+                const parsedData = JSON.parse(proxyData.contents);
+                
+                channelsList = parsedData.data || parsedData.channels || [];
+                
+                // Sort everything by count descending for perfect standings calculation
                 channelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
 
-                if (msgText && msgText.textContent.includes("Loading database data...")) {
+                if (msgText && (msgText.textContent.includes("Connecting") || msgText.textContent.includes("Loading"))) {
                     msgText.textContent = "Ready! Enter your channel name above.";
                 }
             } catch (err) {
-                console.error("Format conflict parsing parameters:", err);
+                console.error("Network read timeout loop conflict:", err);
             }
-        };
-
-        function fetchLiveDatabase() {
-            const networkScript = document.createElement('script');
-            networkScript.src = 'https://lcedit.com' + Date.now();
-            document.body.appendChild(networkScript);
         }
 
         fetchLiveDatabase();
 
-        // Refresh database every 10 seconds silently to capture stream !add triggers
-        setInterval(fetchLiveDatabase, 10000);
+        // Refresh database every 12 seconds silently to catch live stream commands
+        setInterval(fetchLiveDatabase, 12000);
 
-        // Fix: Explicitly catches the user's enter key without page submission reloads
         function handleEnterKeyTrigger(event) {
             if (event.key === "Enter") {
                 startLiveTracking();
@@ -257,6 +255,11 @@
                 return;
             }
 
+            if (channelsList.length === 0) {
+                resultDiv.innerHTML = "<p style='color: #ff4a4a; margin:0;'>Connecting to live server. Give it a moment...</p>";
+                return;
+            }
+
             activeUser = channelsList.find(user => {
                 const currentName = (user.name || "").toString().trim().toLowerCase();
                 return currentName === searchInput;
@@ -268,8 +271,6 @@
                 }
 
                 renderUserCard();
-                
-                // Visual odometer ticker speed interval (runs calculations locally)
                 liveUpdateTimer = setInterval(executeLiveTick, 2000); 
 
             } else {
