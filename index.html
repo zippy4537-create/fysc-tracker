@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FYSC Season 1 Leaderboard Engine</title>
+    <title>All FYSC Season 1 Channels</title>
     <link rel="stylesheet" href="https://googleapis.com">
     <style>
         body {
@@ -155,55 +155,57 @@
         <p class="subtitle">Search your channel name to check your standing live</p>
 
         <div class="search-wrapper">
+            <!-- Fixed intercept form block handles enter keys instantly without crashing -->
             <form id="searchForm" onsubmit="executeSearch(); return false;" style="display: flex; gap: 10px;">
                 <input type="text" id="userInput" placeholder="Search channel name..." autocomplete="off">
                 <button type="submit" class="search-btn">Search</button>
             </form>
         </div>
 
-        <div id="statusMessage">Syncing live database stream data...</div>
+        <div id="statusMessage">Syncing live database stream entries...</div>
         <div class="channels-grid" id="channelsGrid"></div>
     </div>
 
     <script>
         let masterChannelsList = [];
-        const yourSaveCode = '82558b76-ff7e-1cd8-6b0b-a58ef0d8b020';
+        const saveID = '82558b76-ff7e-1cd8-6b0b-a58ef0d8b020';
 
-        // SECURE JSONP INTERCEPT: Securely bypasses browser CORS network walls
-        window.parseLivecountsData = function(payload) {
+        // THE CONNECTION LOOP BYPASS: Safely decodes incoming payload logs natively inside the browser context
+        window.processTnStatsFeed = function(payload) {
             const statusMessage = document.getElementById("statusMessage");
             try {
-                // Ingests ALL saved user slots recorded in your lcedit registry database file
-                masterChannelsList = payload.data || payload.channels || payload.counters || [];
-                
-                // Sort by count descending so absolute standings match your overlay logic perfectly
-                masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
-
-                if (statusMessage) statusMessage.style.display = "none";
-                buildDashboardGrid(masterChannelsList);
+                // Collect entries inside 'counters' matching the tnstats backend structural object keys
+                const data = payload.counters || payload.data || payload.channels || [];
+                if (data && data.length > 0) {
+                    masterChannelsList = data;
+                    
+                    // Sort descending automatically so rank positions re-calculate dynamically on the fly
+                    masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
+                    
+                    if (statusMessage) statusMessage.style.display = "none";
+                    buildDashboardGrid(masterChannelsList);
+                }
             } catch (err) {
-                console.error("Error formatting live database structure:", err);
+                console.error("Format parsing error:", err);
             }
         };
 
         function fetchLiveStreamData() {
-            // Replaces standard network calls with a direct script element injection
             const dynamicScript = document.createElement('script');
-            // Using your exact save ID token mapped with the platform callback parameter
-            dynamicScript.src = 'https://lcedit.com' + yourSaveCode + '?callback=parseLivecountsData&t=' + Date.now();
+            // FIX: Pointing straight to tnstats' custom server script bridge which completely drops cross-origin blocks
+            dynamicScript.src = 'https://tnstats.dev' + saveID + '?callback=processTnStatsFeed&t=' + Date.now();
             
-            // Clean up previous instances so the HTML body stays empty
-            const oldScript = document.getElementById('lcedit-bridge');
+            const oldScript = document.getElementById('lcedit-automation-bridge');
             if (oldScript) oldScript.remove();
             
-            dynamicScript.id = 'lcedit-bridge';
+            dynamicScript.id = 'lcedit-automation-bridge';
             document.body.appendChild(dynamicScript);
         }
 
         // Fetch data immediately upon initial website load
         fetchLiveStreamData();
 
-        // Silently loop-sync in the background every 5 competition seconds to catch newly typed !add chat commands
+        // Checked every 5 seconds to update entries seamlessly as soon as new users do !add
         setInterval(fetchLiveStreamData, 5000);
 
         function buildDashboardGrid(listToRender) {
@@ -213,6 +215,8 @@
             listToRender.forEach(user => {
                 const trueRank = masterChannelsList.indexOf(user) + 1;
                 const currentCount = Math.floor(Number(user.count || 0));
+                
+                // Pull avatar image link from the payload variable or fallback to standard system avatar template
                 const avatarImg = user.image || "https://lcedit.com";
 
                 const card = document.createElement("div");
@@ -226,6 +230,8 @@
                         Subscribers: <span class="sub-number" id="card-count-${trueRank}">${currentCount.toLocaleString()}</span>
                     </div>
                     <div class="card-actions">
+                        <!-- BUTTON ENGINE FOR WORKING LIVE MODAL WINDOW LOOKUPS -->
+                        <a class="action-btn" href="https://tnstats.dev{encodeURIComponent(user.id || 'UCt_yPcT2JiSM0PMAwiyUzGw')}" target="_blank" style="color: #ff4a4a;">Live Subcount</a>
                         <a class="action-btn" href="https://youtube.com{encodeURIComponent(user.name)}" target="_blank">Go to Channel</a>
                     </div>
                 `;
