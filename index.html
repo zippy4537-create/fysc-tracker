@@ -161,27 +161,20 @@
             </form>
         </div>
 
-        <div id="statusMessage">Connecting directly to live metrics stream...</div>
+        <div id="statusMessage">Syncing live database streams...</div>
         <div class="channels-grid" id="channelsGrid"></div>
     </div>
 
     <script>
         let masterChannelsList = [];
-        const lceditSaveID = '82558b76-ff7e-1cd8-6b0b-a58ef0d8b020';
+        const saveID = '82558b76-ff7e-1cd8-6b0b-a58ef0d8b020';
 
-        async function fetchLiveStreamData() {
+        // THE LOOP BREAKING PAYLOAD ENGINE: Processes the data parameters directly in the tab environment
+        window.lceditResponseHandler = function(payload) {
             const statusMessage = document.getElementById("statusMessage");
             try {
-                // HIGHSPEED ENTERPRISE CORSPROXY TUNNEL
-                const targetUrl = 'https://lcedit.com' + lceditSaveID;
-                const response = await fetch('https://corsproxy.io?' + encodeURIComponent(targetUrl) + '&t=' + Date.now());
-                
-                if (!response.ok) throw new Error("Proxy connection down");
-                
-                const parsedData = await response.json();
-                
-                // Matches Livecountsedit's dynamic internal parameter keys
-                const incomingData = parsedData.counters || parsedData.data || parsedData.channels || [];
+                // Ingests the correct internal parameter rows straight out of the stream registry
+                const incomingData = payload.counters || payload.data || payload.channels || [];
                 
                 if (incomingData && incomingData.length > 0) {
                     masterChannelsList = incomingData;
@@ -193,18 +186,27 @@
                     buildDashboardGrid(masterChannelsList);
                 }
             } catch (err) {
-                console.error("Data pipeline block: ", err);
-                if (statusMessage && masterChannelsList.length === 0) {
-                    statusMessage.textContent = "Syncing connection matrix... (Retrying)";
-                }
+                console.error("Compilation error parsing stream variables: ", err);
             }
+        };
+
+        function fetchLiveStreamData() {
+            // Generates a native script loading element using the staging gateway which bypasses all browser firewalls
+            const dynamicScript = document.createElement('script');
+            dynamicScript.src = 'https://lcedit.com' + saveID + '?callback=lceditResponseHandler&t=' + Date.now();
+            
+            const existingScript = document.getElementById('lcedit-automation-bridge');
+            if (existingScript) existingScript.remove();
+            
+            dynamicScript.id = 'lcedit-automation-bridge';
+            document.body.appendChild(dynamicScript);
         }
 
-        // Run instantly on load
+        // Fetch data immediately upon initial website load
         fetchLiveStreamData();
 
-        // Check for updates every 5 seconds completely hands-free
-        setInterval(fetchLiveStreamData, 5000);
+        // Silent automatic check runs in the background every 7 seconds to catch newly typed !add chat commands
+        setInterval(fetchLiveStreamData, 7000);
 
         function buildDashboardGrid(listToRender) {
             const grid = document.getElementById("channelsGrid");
