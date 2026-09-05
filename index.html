@@ -167,21 +167,14 @@
 
     <script>
         let masterChannelsList = [];
-        const lceditSaveID = '82558b76-ff7e-1cd8-6b0b-a58ef0d8b020';
+        const saveID = '82558b76-ff7e-1cd8-6b0b-a58ef0d8b020';
 
-        async function fetchLiveStreamData() {
+        // THE FIXED PAYLOAD INTERCEPT: Safely executes incoming data strings directly in the browser window context
+        window.lceditResponseHandler = function(payload) {
             const statusMessage = document.getElementById("statusMessage");
             try {
-                // Connects directly to an open development proxy channel that completely strips cross-origin blocks
-                const targetUrl = 'https://lcedit.com' + lceditSaveID;
-                const response = await fetch('https://corsproxy.io?' + encodeURIComponent(targetUrl) + '&t=' + Date.now());
-                
-                if (!response.ok) throw new Error("Connection down");
-                
-                const parsedData = await response.json();
-                
-                // Automatically extracts the raw user lists from Livecountsedit's dynamic file structure
-                const incomingData = parsedData.counters || parsedData.data || parsedData.channels || [];
+                // Ingest raw array content from Livecountsedit's internal parameters layout
+                const incomingData = payload.counters || payload.data || payload.channels || [];
                 
                 if (incomingData && incomingData.length > 0) {
                     masterChannelsList = incomingData;
@@ -193,14 +186,23 @@
                     buildDashboardGrid(masterChannelsList);
                 }
             } catch (err) {
-                console.error("Data pipeline block: ", err);
-                if (statusMessage && masterChannelsList.length === 0) {
-                    statusMessage.textContent = "Re-establishing unblocked data feed... (Retrying)";
-                }
+                console.error("Format parsing block conflict: ", err);
             }
+        };
+
+        function fetchLiveStreamData() {
+            // Replaces network fetches with a dynamic script element injection on the primary domain path
+            const dynamicScript = document.createElement('script');
+            dynamicScript.src = 'https://lcedit.com' + saveID + '?callback=lceditResponseHandler&t=' + Date.now();
+            
+            const existingScript = document.getElementById('lcedit-automation-bridge');
+            if (existingScript) existingScript.remove();
+            
+            dynamicScript.id = 'lcedit-automation-bridge';
+            document.body.appendChild(dynamicScript);
         }
 
-        // Run instantly on load
+        // Initialize connection instantly on web application load
         fetchLiveStreamData();
 
         // Check for updates every 5 seconds completely hands-free to catch live chat !add commands
