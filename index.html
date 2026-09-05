@@ -4,107 +4,120 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>All FYSC Season 1 Channels</title>
+    <link rel="stylesheet" href="https://googleapis.com">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #222222;
+            font-family: 'Roboto', sans-serif;
+            background-color: #121212;
             color: #ffffff;
-            margin: 0;
-            padding: 40px 20px;
             text-align: center;
+            padding: 40px 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
         }
         h1 {
+            color: #ff4a4a;
             font-size: 36px;
-            margin-bottom: 30px;
+            margin-bottom: 5px;
         }
-        .search-container {
+        .subtitle {
+            color: #aaaaaa;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        .search-wrapper {
             margin-bottom: 40px;
             display: flex;
             justify-content: center;
             gap: 10px;
         }
         input[type="text"] {
-            background-color: #1a242d;
-            border: 1px solid #3ca4a6;
-            color: #ffffff;
-            padding: 10px 15px;
-            font-size: 14px;
-            border-radius: 4px;
-            width: 250px;
+            background-color: #1e1e1e;
+            border: 2px solid #333;
+            color: white;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 6px;
+            width: 300px;
             outline: none;
         }
+        input[type="text"]:focus {
+            border-color: #ff4a4a;
+        }
         button.search-btn {
-            background-color: #1a242d;
-            border: 1px solid #3ca4a6;
-            color: #3ca4a6;
-            padding: 10px 25px;
-            font-size: 14px;
-            border-radius: 4px;
+            background-color: #ff4a4a;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
         }
-        button.search-btn:hover {
-            background-color: #3ca4a6;
-            color: #1a242d;
-        }
         .channels-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
             gap: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
+            margin-bottom: 50px;
         }
         .channel-card {
-            background-color: #2d2d2d;
-            border-radius: 6px;
-            padding: 15px;
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
             position: relative;
             text-align: left;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            border: 1px solid #3d3d3d;
+        }
+        .channel-card:hover {
+            border-color: #ff4a4a;
         }
         .rank-badge {
             position: absolute;
             top: 10px;
             left: 10px;
-            background-color: #00bcd4;
-            color: #ffffff;
-            font-size: 11px;
+            background-color: #ff4a4a;
+            color: white;
+            font-size: 12px;
             font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 3px;
+            padding: 3px 8px;
+            border-radius: 4px;
         }
         .card-header {
             display: flex;
             align-items: center;
-            margin-top: 20px;
+            margin-top: 15px;
             margin-bottom: 15px;
-            gap: 10px;
+            gap: 12px;
         }
         .avatar {
             width: 55px;
             height: 55px;
-            border-radius: 4px;
+            border-radius: 50%;
             object-fit: cover;
-            background-color: #444;
+            border: 2px solid #333;
+            background-color: #25273c;
         }
         .channel-name {
-            font-size: 14px;
+            font-size: 15px;
             font-weight: bold;
             word-break: break-word;
-            color: #ffffff;
         }
         .sub-count-line {
-            font-size: 12px;
+            font-size: 13px;
             color: #aaaaaa;
             margin-bottom: 15px;
+            border-top: 1px solid #333;
+            padding-top: 12px;
         }
         .sub-number {
             color: #ffffff;
             font-weight: bold;
             display: block;
-            font-size: 15px;
-            margin-top: 2px;
+            font-size: 20px;
+            font-family: monospace;
         }
         .card-actions {
             display: flex;
@@ -112,71 +125,75 @@
             gap: 8px;
         }
         .action-btn {
-            background-color: #1a242d;
-            border: 1px solid #3ca4a6;
-            color: #3ca4a6;
-            padding: 8px;
-            font-size: 12px;
-            border-radius: 4px;
+            background-color: #121212;
+            border: 1px solid #333;
+            color: #ddd;
+            padding: 10px;
+            font-size: 13px;
+            border-radius: 6px;
             cursor: pointer;
             text-align: center;
             font-weight: bold;
             text-decoration: none;
-            transition: 0.15s;
         }
         .action-btn:hover {
-            background-color: #3ca4a6;
-            color: #1a242d;
+            border-color: #ff4a4a;
+            color: white;
         }
         #statusMessage {
             font-size: 16px;
-            color: #aaaaaa;
+            color: #ff4a4a;
+            font-weight: bold;
             margin-top: 20px;
         }
     </style>
 </head>
 <body>
 
-    <h1>All FYSC Season 1 Channels</h1>
+    <div class="container">
+        <h1>All FYSC Season 1 Channels</h1>
+        <p class="subtitle">Search your channel name to check your standing live</p>
 
-    <div class="search-container">
-        <form onsubmit="filterChannels(); return false;" style="display: flex; gap: 10px;">
-            <input type="text" id="userInput" placeholder="Search user..." oninput="filterChannels()">
-            <button type="submit" class="search-btn">Search User</button>
-        </form>
+        <div class="search-wrapper">
+            <form id="searchForm" onsubmit="executeSearch(); return false;" style="display: flex; gap: 10px;">
+                <input type="text" id="userInput" placeholder="Search channel name..." autocomplete="off">
+                <button type="submit" class="search-btn">Search</button>
+            </form>
+        </div>
+
+        <div id="statusMessage">Syncing live database stream channel updates...</div>
+        <div class="channels-grid" id="channelsGrid"></div>
     </div>
-
-    <div id="statusMessage">Syncing live channel directory cards...</div>
-    <div class="channels-grid" id="channelsGrid"></div>
 
     <script>
         let masterChannelsList = [];
+        const saveID = '82558b76-ff7e-1cd8-6b0b-a58ef0d8b020';
 
-        // THE NATIVE SCRIPT BYPASS: Receives data payload loops natively inside the browser execution context
-        window.processLivecountsStream = function(payload) {
+        // THE RUNTIME ENGINE HOOK: Securely processes the data array directly into your web tab layout
+        window.parseLiveStreamGrid = function(payload) {
             const statusMessage = document.getElementById("statusMessage");
             try {
-                // Ingest raw data container out of your save ID profile token mapping setup
+                // Extracts the dynamic data arrays directly from Livecountsedit's internal parameter storage
                 const incomingData = payload.counters || payload.data || payload.channels || [];
                 
-                if (incomingData.length > 0) {
+                if (incomingData && incomingData.length > 0) {
                     masterChannelsList = incomingData;
                     
-                    // Sort descending automatically so rank placements map perfectly across all profiles
+                    // Sort descending automatically so rankings and placements calculate on the fly for new entries
                     masterChannelsList.sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
                     
                     if (statusMessage) statusMessage.style.display = "none";
-                    renderGridHTML(masterChannelsList);
+                    buildDashboardGrid(masterChannelsList);
                 }
             } catch (err) {
-                console.error("Format compilation error:", err);
+                console.error("Format parsing block conflict: ", err);
             }
         };
 
         function fetchLiveStreamData() {
+            // Generates an unblocked script loading wrapper element that completely drops cross-origin blocks
             const dynamicScript = document.createElement('script');
-            // Connects directly via script callback tags which browser layers are structurally forced to trust
-            dynamicScript.src = 'https://lcedit.com' + Date.now();
+            dynamicScript.src = 'https://lcedit.com' + saveID + '?callback=parseLiveStreamGrid&t=' + Date.now();
             
             const existingScript = document.getElementById('lcedit-automation-bridge');
             if (existingScript) existingScript.remove();
@@ -185,53 +202,52 @@
             document.body.appendChild(dynamicScript);
         }
 
-        // Fetch data immediately upon initial website load
+        // Run data extraction immediately upon loading your site page link
         fetchLiveStreamData();
 
-        // Silently loop-sync in the background every 8 seconds to catch newly typed !add chat commands automatically
-        setInterval(fetchLiveStreamData, 8000);
+        // Quiet background loop checks your stream ledger every 5 seconds to instantly parse new !add commands
+        setInterval(fetchLiveStreamData, 5000);
 
-        function renderGridHTML(listToRender) {
+        function buildDashboardGrid(listToRender) {
             const grid = document.getElementById("channelsGrid");
             grid.innerHTML = "";
 
             listToRender.forEach(user => {
                 const trueRank = masterChannelsList.indexOf(user) + 1;
                 const currentCount = Math.floor(Number(user.count || 0));
-                const avatarImg = user.image || "https://placeholder.com";
+                const avatarImg = user.image || "https://lcedit.com";
 
                 const card = document.createElement("div");
                 card.className = "channel-card";
                 card.innerHTML = `
                     <div class="rank-badge">#${trueRank}</div>
                     <div class="card-header">
-                        <img class="avatar" src="${avatarImg}" alt="Avatar">
-                        <span class="channel-name">${user.name}</span>
+                        <img class="avatar" src="${avatarImg}"><span class="channel-name">${user.name}</span>
                     </div>
                     <div class="sub-count-line">
-                        Subscribers:
-                        <span class="sub-number">${currentCount.toLocaleString()}</span>
+                        Subscribers: <span class="sub-number" id="card-count-${trueRank}">${currentCount.toLocaleString()}</span>
                     </div>
                     <div class="card-actions">
-                        <button class="action-btn" onclick="alert('Viewing live count for ${user.name}')">Live Subcount</button>
-                        <a class="action-btn" href="https://youtube.com" target="_blank">Go to Channel</a>
+                        <a class="action-btn" href="https://youtube.com{encodeURIComponent(user.name)}" target="_blank">Go to Channel</a>
                     </div>
                 `;
                 grid.appendChild(card);
             });
         }
 
-        function filterChannels() {
+        function executeSearch() {
             const query = document.getElementById("userInput").value.trim().toLowerCase();
             if (query === "") {
-                renderGridHTML(masterChannelsList);
+                buildDashboardGrid(masterChannelsList);
                 return;
             }
             const filtered = masterChannelsList.filter(user => 
                 (user.name || "").toString().toLowerCase().includes(query)
             );
-            renderGridHTML(filtered);
+            buildDashboardGrid(filtered);
         }
+
+        document.getElementById("userInput").addEventListener("input", executeSearch);
     </script>
 </body>
 </html>
