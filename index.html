@@ -3,107 +3,237 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FYSC Season 1 - Check Your Rank</title>
+    <title>FYSC Season 2 - Live Rankings</title>
     <style>
+        * { box-sizing: border-box; }
         body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #121212;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: radial-gradient(circle at top, #1b1035 0%, #0a0714 55%, #050308 100%);
             color: #ffffff;
             text-align: center;
-            padding: 40px 20px;
+            padding: 50px 20px;
             margin: 0;
+            min-height: 100vh;
         }
-        .container { max-width: 500px; margin: 0 auto; }
-        h1 { color: #ff4a4a; font-size: 32px; margin-bottom: 5px; }
-        .subtitle { color: #aaaaaa; margin-bottom: 30px; font-size: 16px; }
-        .search-wrapper { margin-bottom: 30px; display: flex; justify-content: center; gap: 10px; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        .badge {
+            display: inline-block;
+            background: linear-gradient(90deg, #ff4a4a, #ff8a4a);
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            margin-bottom: 18px;
+            text-transform: uppercase;
+        }
+        h1 {
+            background: linear-gradient(90deg, #ff4a4a, #ff9d6c);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-size: 42px;
+            font-weight: 800;
+            margin: 0 0 8px 0;
+            letter-spacing: -0.5px;
+        }
+        .subtitle { color: #9a94ad; margin-bottom: 30px; font-size: 15px; }
+        .search-wrapper {
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.03);
+            padding: 8px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.08);
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
         input[type="text"] {
-            background-color: #1e1e1e; border: 2px solid #333; color: white;
-            padding: 12px 20px; font-size: 16px; border-radius: 6px; width: 250px; outline: none;
+            background-color: transparent;
+            border: none;
+            color: white;
+            padding: 12px 16px;
+            font-size: 16px;
+            border-radius: 10px;
+            flex: 1;
+            outline: none;
         }
-        input[type="text"]:focus { border-color: #ff4a4a; }
+        input[type="text"]::placeholder { color: #6e6880; }
         button.search-btn {
-            background-color: #ff4a4a; color: white; border: none; padding: 12px 30px;
-            font-size: 16px; border-radius: 6px; cursor: pointer; font-weight: bold;
+            background: linear-gradient(90deg, #ff4a4a, #ff7a4a);
+            color: white;
+            border: none;
+            padding: 12px 26px;
+            font-size: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
         }
-        .result-card {
-            background-color: #1e1e1e; border: 1px solid #333; border-radius: 8px;
-            padding: 25px; display: none;
+        button.search-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(255,74,74,0.35); }
+
+        .grid-scroll {
+            max-height: 70vh;
+            overflow-y: auto;
+            padding: 6px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.06);
+            background: rgba(255,255,255,0.015);
         }
-        .result-card.visible { display: block; }
-        .result-name { font-size: 20px; font-weight: bold; margin-bottom: 15px; }
-        .result-row { display: flex; justify-content: space-between; padding: 10px 0; border-top: 1px solid #333; }
-        .result-label { color: #aaa; }
-        .result-value { font-weight: bold; font-family: monospace; font-size: 18px; }
-        #statusMessage { font-size: 15px; color: #aaa; margin-top: 15px; }
-        #statusMessage.error { color: #ff4a4a; }
+        .grid-scroll::-webkit-scrollbar { width: 10px; }
+        .grid-scroll::-webkit-scrollbar-thumb { background: rgba(255,74,74,0.4); border-radius: 10px; }
+        .grid-scroll::-webkit-scrollbar-track { background: transparent; }
+
+        .channels-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 14px;
+            padding: 10px;
+        }
+        .channel-card {
+            background: linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 16px;
+            position: relative;
+            text-align: left;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        .rank-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(90deg, #ff4a4a, #ff8a4a);
+            color: white;
+            font-size: 11px;
+            font-weight: 800;
+            padding: 3px 9px;
+            border-radius: 999px;
+        }
+        .channel-name {
+            font-size: 15px;
+            font-weight: 700;
+            word-break: break-word;
+            margin-bottom: 10px;
+            padding-right: 40px;
+        }
+        .sub-count-line {
+            font-size: 12px;
+            color: #9a94ad;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding-top: 10px;
+        }
+        .sub-number {
+            color: #ff9d6c;
+            font-weight: 800;
+            display: block;
+            font-size: 22px;
+            font-family: 'Courier New', monospace;
+            margin-top: 2px;
+        }
+        #statusMessage { font-size: 14px; color: #9a94ad; margin: 20px 0; min-height: 20px; }
+        #statusMessage.error { color: #ff6b6b; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>FYSC Season 1</h1>
-        <p class="subtitle">Search your channel name to check your live rank & count</p>
+        <span class="badge">Live Tracker</span>
+        <h1>FYSC Season 2</h1>
+        <p class="subtitle">Everyone's live rank & count — search to jump to a name</p>
 
         <div class="search-wrapper">
-            <form id="searchForm" onsubmit="doSearch(); return false;" style="display: flex; gap: 10px;">
-                <input type="text" id="userInput" placeholder="Your channel name..." autocomplete="off">
+            <form id="searchForm" onsubmit="filterList(); return false;" style="display: flex; gap: 10px; width: 100%;">
+                <input type="text" id="userInput" placeholder="Search a channel name..." autocomplete="off">
                 <button type="submit" class="search-btn">Search</button>
             </form>
         </div>
 
-        <div class="result-card" id="resultCard">
-            <div class="result-name" id="resultName"></div>
-            <div class="result-row"><span class="result-label">Rank</span><span class="result-value" id="resultRank"></span></div>
-            <div class="result-row"><span class="result-label">Subscribers</span><span class="result-value" id="resultCount"></span></div>
-        </div>
+        <div id="statusMessage">Loading...</div>
 
-        <div id="statusMessage"></div>
+        <div class="grid-scroll">
+            <div class="channels-grid" id="channelsGrid"></div>
+        </div>
     </div>
 
     <script>
-        // ---- CONFIGURE THIS: your Cloudflare Worker URL after deployment ----
         const WORKER_URL = "https://deploy.zippy4537.workers.dev";
-        // -----------------------------------------------------------------------
+        let fullList = [];
 
-        async function doSearch() {
-            const name = document.getElementById("userInput").value.trim();
+        async function loadAll() {
             const statusEl = document.getElementById("statusMessage");
-            const cardEl = document.getElementById("resultCard");
-            statusEl.className = "";
-            cardEl.classList.remove("visible");
-
-            if (!name) {
-                statusEl.textContent = "Type your channel name above.";
-                return;
-            }
-
-            statusEl.textContent = "Looking up...";
-
             try {
-                const res = await fetch(`${WORKER_URL}/lookup?name=${encodeURIComponent(name)}`);
+                const res = await fetch(`${WORKER_URL}/all?t=${Date.now()}`);
                 const data = await res.json();
+                fullList = data.channels || [];
 
-                if (data.error === "not_found") {
-                    statusEl.className = "error";
-                    statusEl.textContent = "We don't have you yet — type !add in chat first, then search again.";
+                if (fullList.length === 0) {
+                    statusEl.textContent = "No one's been added yet — type !add in chat to join!";
+                    document.getElementById("channelsGrid").innerHTML = "";
                     return;
                 }
-                if (data.error) {
-                    statusEl.className = "error";
-                    statusEl.textContent = "Something went wrong, try again in a moment.";
-                    return;
-                }
-
-                document.getElementById("resultName").textContent = data.name;
-                document.getElementById("resultRank").textContent = data.rank ? "#" + data.rank : (data.rawRank || "?");
-                document.getElementById("resultCount").textContent = data.count || data.rawSubs || "?";
-                cardEl.classList.add("visible");
                 statusEl.textContent = "";
+                filterList();
             } catch (err) {
                 statusEl.className = "error";
-                statusEl.textContent = "Couldn't reach the tracker — try again in a moment.";
+                statusEl.textContent = "Couldn't reach the tracker — retrying...";
             }
         }
+
+        function renderGrid(list) {
+            const grid = document.getElementById("channelsGrid");
+            grid.innerHTML = "";
+            list.forEach(entry => {
+                const card = document.createElement("div");
+                card.className = "channel-card";
+                card.innerHTML = `
+                    <div class="rank-badge">#${entry.rank}</div>
+                    <div class="channel-name">${escapeHtml(entry.name)}</div>
+                    <div class="sub-count-line">
+                        Subscribers
+                        <span class="sub-number">${entry.count.toLocaleString()}</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement("div");
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function filterList() {
+            const ranked = fullList.map((c, i) => ({ ...c, rank: i + 1 }));
+            const query = document.getElementById("userInput").value.trim().toLowerCase();
+            const statusEl = document.getElementById("statusMessage");
+
+            const shown = query === ""
+                ? ranked
+                : ranked.filter(c => c.name.toLowerCase().includes(query));
+
+            if (query !== "" && shown.length === 0) {
+                statusEl.className = "error";
+                statusEl.textContent = "We don't have that name yet — type !add in chat first.";
+            } else {
+                statusEl.className = "";
+                statusEl.textContent = "";
+            }
+
+            renderGrid(shown);
+        }
+
+        document.getElementById("userInput").addEventListener("input", filterList);
+
+        loadAll();
+        setInterval(loadAll, 8000);
     </script>
 </body>
 </html>
