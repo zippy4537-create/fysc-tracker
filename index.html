@@ -137,6 +137,11 @@
             font-size: 22px;
             font-family: 'Courier New', monospace;
             margin-top: 2px;
+            transition: color 0.3s ease, text-shadow 0.3s ease;
+        }
+        .sub-number.bumping {
+            color: #4aff8a;
+            text-shadow: 0 0 12px rgba(74,255,138,0.6);
         }
         #statusMessage { font-size: 14px; color: #9a94ad; margin: 20px 0; min-height: 20px; }
         #statusMessage.error { color: #ff6b6b; }
@@ -165,6 +170,7 @@
     <script>
         const WORKER_URL = "https://deploy.zippy4537.workers.dev";
         let fullList = [];
+        let previousCounts = {};
 
         async function loadAll() {
             const statusEl = document.getElementById("statusMessage");
@@ -186,6 +192,22 @@
             }
         }
 
+        function animateNumber(el, from, to, duration) {
+            const start = performance.now();
+            function step(now) {
+                const progress = Math.min((now - start) / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3); // ease-out
+                const current = Math.floor(from + (to - from) * eased);
+                el.textContent = current.toLocaleString();
+                if (progress < 1) {
+                    requestAnimationFrame(step);
+                } else {
+                    el.textContent = to.toLocaleString();
+                }
+            }
+            requestAnimationFrame(step);
+        }
+
         function renderGrid(list) {
             const grid = document.getElementById("channelsGrid");
             grid.innerHTML = "";
@@ -197,11 +219,22 @@
                     <div class="channel-name">${escapeHtml(entry.name)}</div>
                     <div class="sub-count-line">
                         Subscribers
-                        <span class="sub-number">${entry.count.toLocaleString()}</span>
+                        <span class="sub-number" data-name="${escapeHtml(entry.name)}">${entry.count.toLocaleString()}</span>
                     </div>
                 `;
                 grid.appendChild(card);
+
+                const numberEl = card.querySelector(".sub-number");
+                const prev = previousCounts[entry.name];
+
+                if (prev !== undefined && prev !== entry.count) {
+                    animateNumber(numberEl, prev, entry.count, 700);
+                    numberEl.classList.add("bumping");
+                    setTimeout(() => numberEl.classList.remove("bumping"), 700);
+                }
             });
+
+            list.forEach(entry => { previousCounts[entry.name] = entry.count; });
         }
 
         function escapeHtml(str) {
