@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        font-family: 'Segoe UI', Roboto, sans-serif;
+        overflow: hidden;
+    }
+    .ticker-bar {
+        display: flex;
+        align-items: center;
+        height: 54px;
+        background: linear-gradient(90deg, #100b28, #241a45);
+        border-top: 2px solid #d4af37;
+        border-bottom: 2px solid #d4af37;
+        overflow: hidden;
+        position: relative;
+        white-space: nowrap;
+    }
+    .ticker-label {
+        flex-shrink: 0;
+        background: linear-gradient(90deg, #ff4a4a, #ff8a4a);
+        color: white;
+        font-weight: 900;
+        font-size: 14px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        padding: 0 20px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        z-index: 2;
+    }
+    .ticker-track {
+        display: flex;
+        align-items: center;
+        gap: 40px;
+        animation: scroll 20s linear infinite;
+        padding-left: 100%;
+    }
+    .ticker-item {
+        color: #fff;
+        font-weight: 700;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .ticker-item .star { color: #ffd447; }
+    @keyframes scroll {
+        from { transform: translateX(0); }
+        to { transform: translateX(-100%); }
+    }
+</style>
+</head>
+<body>
+
+<div class="ticker-bar">
+    <div class="ticker-label">Just Added</div>
+    <div class="ticker-track" id="tickerTrack">
+        <div class="ticker-item"><span class="star">&#9733;</span> Waiting for !add...</div>
+    </div>
+</div>
+
+<script>
+    // ---- CONFIGURE THIS: your Worker URL ----
+    const WORKER_URL = "https://deploy.zippy4537.workers.dev";
+    // ------------------------------------------
+
+    let knownNames = new Set();
+    let recentQueue = [];
+    let firstLoad = true;
+
+    function rebuildTrack() {
+        const track = document.getElementById("tickerTrack");
+        track.innerHTML = "";
+
+        const itemsToShow = recentQueue.length > 0
+            ? recentQueue
+            : ["Type !add in chat to be featured here!"];
+
+        // Duplicate the list a couple times so the scroll loop looks continuous
+        for (let rep = 0; rep < 3; rep++) {
+            itemsToShow.forEach(name => {
+                const item = document.createElement("div");
+                item.className = "ticker-item";
+                item.innerHTML = `<span class="star">&#9733;</span> ${escapeHtml(name)}`;
+                track.appendChild(item);
+            });
+        }
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement("div");
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    async function checkForNewAdds() {
+        try {
+            const res = await fetch(`${WORKER_URL}/all?t=${Date.now()}`);
+            const data = await res.json();
+            const channels = data.channels || [];
+
+            let changed = false;
+
+            channels.forEach(c => {
+                if (!knownNames.has(c.name)) {
+                    knownNames.add(c.name);
+                    if (!firstLoad) {
+                        recentQueue.unshift(c.name);
+                        if (recentQueue.length > 12) recentQueue.pop();
+                        changed = true;
+                    }
+                }
+            });
+
+            if (changed || firstLoad) rebuildTrack();
+            firstLoad = false;
+        } catch (err) {
+            console.error("Ticker update failed:", err);
+        }
+    }
+
+    checkForNewAdds();
+    setInterval(checkForNewAdds, 6000);
+</script>
+
+</body>
+</html>
